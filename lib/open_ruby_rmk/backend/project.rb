@@ -1,0 +1,84 @@
+# -*- coding: utf-8 -*-
+
+# A project is the toplevel entity the OpenRubyRMK copes with.
+class OpenRubyRMK::Backend::Project
+  include OpenRubyRMK::Backend::Invalidatable
+
+  #Struct encapsulating all the path information for a
+  #single project.
+  Paths = Struct.new(:root, :rmk_file, :data_dir, :maps_dir, :maps_file, :graphics_dir, :tilesets_dir, :scripts_dir) do
+    def initialize(root) # :nodoc:
+      self.root         = Pathname.new(root).expand_path
+      self.rmk_file     = self.root    + "bin" + "#{self.root.basename}.rmk"
+      self.data_dir     = self.root    + "data"
+      self.graphics_dir = data_dir     + "graphics"
+      self.maps_dir     = data_dir     + "maps"
+      self.maps_file    = maps_dir     + "maps.xml"
+      self.tilesets_dir = graphics_dir + "tilesets"
+      self.scripts_dir  = data_dir     + "scripts"
+    end
+  end
+
+  #The Paths struct belonging to this project.
+  attr_reader :paths
+  #This project’s main configuration, i.e. the parsed contents
+  #of the +rmk+ file.
+  attr_reader :config
+
+  #Loads an OpenRubyRMK project from a project directory.
+  #==Parameter
+  #[path] The path to the project directory, i.e. the directory
+  #       containing the bin/ subdirectory with the main RMK file.
+  #==Return value
+  #An instance of this class representing the project.
+  def self.load_dir(path)
+    raise(ArgumentError, "Directory doesn't exist: #{path}!") unless File.directory?(path)
+
+    proj = allocate
+    proj.instance_eval do
+      @paths       = Paths.new(path)
+      @config      = YAML.load_file(@paths.rmk_file.to_s)
+    end
+
+    proj
+  end
+
+  #Creates a new project directory at the given path. This method
+  #will copy the files from the skeleton archive (see Paths::SKELETON_FILE)
+  #into that directory and then load the resulting project.
+  #==Parameter
+  #Path where to create a new project directory.
+  #==Return value
+  #A new instance of this class representing the created project.
+  def initialize(path)
+    @paths       = Paths.new(path)
+    create_skeleton
+    @config      = YAML.load_file(@paths.rmk_file.to_s)    
+  end
+
+  # Human-readable description.
+  def inspect
+    "#<#{self.class} #{@paths.root} \"#{@config['name']}\">"
+  end
+
+  #Recursively deletes the project directory and invalidates this
+  #object. Do not use it anymore after calling this.
+  def delete!
+    # 1. Remove the project directory
+    @paths.root.rmtree
+
+    # 2. Commit suicide
+    invalidate!
+  end
+
+  def save
+  end
+
+  #Extracts the skeleton archive into the project directory
+  #and renames the name_of_proj.rmk file to the project’s name.
+  def create_skeleton
+    FileUtils.cp_r "#{OpenRubyRMK::Backend::DATA_DIR}/skeleton/.", @paths.root
+    File.rename(@paths.root.join("bin", "name_of_proj.rmk"), @paths.rmk_file)
+  end
+
+end

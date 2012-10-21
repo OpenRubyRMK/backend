@@ -1,0 +1,9 @@
+= OpenRubyRMK backend
+
+The OpenRubyRMK’s backend library, i.e. the component that does the
+heavy lifting of all the data and which is utilised by GUI
+frontends. Ideally, it will sometime find its way into
+Karfunkel[http://devel.pegasus-alpha.eu/projects/openrubyrmk-karfunkel],
+the hypothetic OpenRubyRMK server that will one day make the
+OpenRubyRMK a network application.
+

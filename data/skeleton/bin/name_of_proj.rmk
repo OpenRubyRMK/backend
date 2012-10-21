@@ -1,0 +1,21 @@
+# -*- mode: yaml; coding: utf-8 -*-
+# This is an OpenRubyRMK project file. You may want to
+# register the `.rmk' file extension with the OpenRubyRMK
+# so you can easily open a project.
+#
+# Other than that, this file holds generic per-project
+# settings. You can mostly change them through the GUI,
+# but if you prefer editing configuration files, just
+# proceed. This file is in YAML format and should be
+# easily understandable even without programming
+# knowledge. Do NOT remove the --- separator below.
+---
+open_ruby_rmk:
+  version: 0.0.1-dev
+
+project:
+  name: Full name of the project
+  version: 0.0.1
+
+ui:
+  last_map:

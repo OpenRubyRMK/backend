@@ -1,0 +1,40 @@
+What is this?
+=============
+
+The config/skeleton subdirectory of Karfunkel’s directory tree
+contains the default layout that will be applied to a newly created
+project, with some small modifications taken out automatically. If
+you aren’t content with the defaults the ORR team provides Karfunkel
+with, feel free to customise this directory to your needs, just keep
+existing things where they are.
+
+This MANIFEST.txt file contains a short description of the
+already existing subdirectories (see below).
+
+Files and directories and their meaning
+=======================================
+
+This file is a brief summary of how OpenRubyRMK project directories
+are organised. First note, that the project directory contains your
+project as Karfunkel, the server, sees it. The actual layout of a game
+you distribute may look entirely different.
+
+Structure is as follows:
+
+Path                    Description
+-----------------------------------
+/                       Project root directory.
+  - MANIFEST.txt        This file.
+  bin/                  Contains the main file.
+    - name_of_proj.rmk  Project main file, containg name, version, etc.
+  data/                 Project data. Graphics, music, ...
+    - categories.xml    Categories (items, skills, etc.) used in a project.
+    audio/              Sounds and music.
+    graphics/           Characters, tilesets...
+    maps/               Actual maps.
+      - maps.xml        Map hierarchy file, specifies which maps are submaps of other maps.
+    scripts/            Global scripts loaded prior to game start. These are those you can create via the "normal" GUI, don’t confuse with the game core library in lib/!
+  lib/                  Game core library, i.e. battle and map handling code, etc. These can be edited from the advanced GUI with the Script Editor.
+
+For a more thorough documentation, see the OpenRubyRMK help or just
+ask us in #OpenRubyRMK on freenode.net.
