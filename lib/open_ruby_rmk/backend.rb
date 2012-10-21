@@ -19,4 +19,6 @@ module OpenRubyRMK
 end
 
 require_relative "backend/invalidatable"
+require_relative "backend/map_storage"
 require_relative "backend/project"
+require_relative "backend/map"

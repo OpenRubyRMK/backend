@@ -24,6 +24,8 @@ class OpenRubyRMK::Backend::Project
   #This project’s main configuration, i.e. the parsed contents
   #of the +rmk+ file.
   attr_reader :config
+  # The root maps of a project.
+  attr_reader :root_maps
 
   #Loads an OpenRubyRMK project from a project directory.
   #==Parameter
@@ -38,6 +40,7 @@ class OpenRubyRMK::Backend::Project
     proj.instance_eval do
       @paths       = Paths.new(path)
       @config      = YAML.load_file(@paths.rmk_file.to_s)
+      @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
     end
 
     proj
@@ -52,6 +55,7 @@ class OpenRubyRMK::Backend::Project
   #A new instance of this class representing the created project.
   def initialize(path)
     @paths       = Paths.new(path)
+    @root_maps   = []
     create_skeleton
     @config      = YAML.load_file(@paths.rmk_file.to_s)    
   end
@@ -71,8 +75,12 @@ class OpenRubyRMK::Backend::Project
     invalidate!
   end
 
+  # Saves all the project’s pecularities out to disk.
   def save
+    OpenRubyRMK::Backend::MapStorage.save_maps_tree(@paths.maps_dir, @paths.maps_file, *@root_maps)
   end
+
+  private
 
   #Extracts the skeleton archive into the project directory
   #and renames the name_of_proj.rmk file to the project’s name.
