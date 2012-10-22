@@ -4,9 +4,6 @@ class OpenRubyRMK::Backend::Map
   # The ID of the map. Unique within a project.
   attr_reader :id
 
-  # The name of the map. Not necessarily unique.
-  attr_reader :name
-
   # An (unsorted) array of child maps of this map.
   attr_reader :children
 
@@ -32,10 +29,9 @@ class OpenRubyRMK::Backend::Map
     map = allocate
     map.instance_eval do
       @id        = File.basename(path).to_s.to_i # Pathname<0001.map> -> "0001.map" -> 1
-      @name      = "<PLEASE IMPLEMENT LOADING THIS>" # TODO
       @children  = []
       @parent    = nil
-      @tiled_map = TiledTmx::load_xml(File.read(path))
+      @tmx_map   = TiledTmx::Map.load_xml(path)
     end
 
     map
@@ -44,14 +40,44 @@ class OpenRubyRMK::Backend::Map
   # Create a new map.
   # == Parameters
   # [id] The ID to assign to this map.
-  # [name] The name of the map; generated from the ID
-  #        if not given.
-  def initialize(id, name = nil)
+  def initialize(id)
     @id       = Integer(id)
-    @name     = name || "Map_#@id"
+    @tmx_map  = TiledTmx::Map.new
     @children = []
     @parent   = nil
-    @tmx_map  = TiledTmx::Map.new
+
+    # Set a default map name (this is not required, but improves
+    # clarity).
+    self[:name] = "Map_#@id"
+  end
+
+  # Read extra properties from the map, e.g.
+  # the map’s <tt>:name</tt>.
+  # == Parameters
+  # [name] The name of the property to read. Autoconverted
+  #        to a string.
+  # == Return value
+  # The property’s value; note this always is a string,
+  # because XML doesn’t know about other data types.
+  def [](name)
+    @tmx_map.properties[name.to_s]
+  end
+
+  # Set an extra property on the map.
+  # == Parameters
+  # [name]
+  #   The name of the property to set. Autoconverted
+  #   to a string.
+  # [value]
+  #   The value of the property. Autoconverted to
+  #   a string.
+  def []=(name, value)
+    @tmx_map.properties[name.to_s] = value.to_s
+  end
+
+  # Human-readable description.
+  def inspect
+    "#<#{self.class} '#{self[:name]}' (ID: #@id)>"
   end
 
   # Correctly dissolves the relationship between this

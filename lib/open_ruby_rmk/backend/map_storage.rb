@@ -52,7 +52,7 @@ module OpenRubyRMK::Backend::MapStorage
       xml = Nokogiri::XML(File.open(maptree_file)) # autoclosed by Nokogiri
       root_maps = []
       xml.root.xpath("map").each do |map|
-        root_maps << read_map_from_tree(map)
+        root_maps << read_map_from_tree(maps_dir, map)
       end
 
       root_maps
@@ -74,11 +74,13 @@ module OpenRubyRMK::Backend::MapStorage
       # 1. Create the maptree file
       # See the module docs for the exact format
       File.open(maptree_file, "w") do |file|
-        Nokogiri::XML::Builder.new do |xml|
-          xml.maptree do |maptree|
+        b = Nokogiri::XML::Builder.new do |xml|
+          xml.maps do |maptree|
             root_maps.each{|map| add_map_to_tree(map, maptree)}
           end #</maptee>
         end #XML::Builder.new
+
+        file.write(b.to_xml)
       end #open
 
       # 2. Save the actual maps
@@ -109,9 +111,9 @@ module OpenRubyRMK::Backend::MapStorage
     # already attached (if any).
     def read_map_from_tree(maps_dir, map_node, parent = nil)
       # Reconstruct this map from the XML
-      target = maps_dir + Map.format_filename(map_node["id"].to_i)
-      map = Map.from_file(target)
-      map.parent = parent
+      target = maps_dir + OpenRubyRMK::Backend::Map.format_filename(map_node["id"].to_i)
+      map = OpenRubyRMK::Backend::Map.from_file(target)
+      map.parent = parent # nil = root map
 
       # Repeat the process for all child maps, but now use
       # our freshly reconstructed Map object as the parent
