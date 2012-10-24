@@ -61,7 +61,7 @@ class OpenRubyRMK::Backend::Category
 
   #Thrown when you try to create an entry with an attribute
   #not allowed in the entry’s category.
-  class UnknownAttribute < OpenRubyRMK::Errors::OpenRubyRMKError
+  class UnknownAttribute < StandardError # TODO: Proper exception hierarchy
 
     # The category you wanted to add the errorneous entry to.
     attr_reader :category
@@ -84,6 +84,7 @@ class OpenRubyRMK::Backend::Category
     # The new exception.
     def initialize(category, entry, attr, msg = nil)
       super(msg || "The attribute #{attr} is not allowed in the #{category} category.")
+      @category       = category
       @entry          = entry
       @attribute_name = attr
     end
@@ -99,10 +100,14 @@ class OpenRubyRMK::Backend::Category
     attr_reader :attributes
 
     #Creates a new and empty entry.
+    #==Parameter
+    #[hsh ({})] Set some attributes on the entry directly
+    #           while creating it. The semantics are the
+    #           same as for the #[]= method.
     #==Return value
     #The new instance.
     def initialize(hsh = {})
-      @attributes = Hash.new("".freeze)
+      @attributes = Hash.new{|h, k| h[k] = ""}
       hsh.each {|k,v| self[k]=v}
     end
 
@@ -117,6 +122,23 @@ class OpenRubyRMK::Backend::Category
     #and +val+ will be converted to strings.
     def []=(name, val)
       @attributes[name.to_s] = val.to_s
+    end
+
+    # Completely erases an attribute from the entry,
+    # as opposed to setting it to +nil+ with #[]=
+    # (what would effectively set it to an empty string).
+    def delete(name)
+      @attributes.delete(name.to_s)
+    end
+    alias delete_attribute delete
+
+    # Checks whether this entry contains an attribute
+    # of the given name. This is mostly used internally,
+    # and you are advised to check a category’s allowed
+    # attributes instead. +name+ is autoconverted to
+    # a string.
+    def include?(name)
+      @attributes.has_key?(name.to_s)
     end
 
     #Iterates over all attribute names and values.
@@ -243,7 +265,7 @@ class OpenRubyRMK::Backend::Category
 
     @allowed_attributes.delete(name)
     @entries.each do |entry|
-      entry[name] = nil
+      entry.delete(name)
     end
   end
 
@@ -263,9 +285,9 @@ class OpenRubyRMK::Backend::Category
       end #</category>
     end # Builder.new
 
-    categories_dir.join("#{self.class.generate_file_id}.xml").open("w") do |file|
-      file.write(b.to_xml)
-    end
+    target = Pathname.new(categories_dir).join("#{self.class.generate_file_id}.xml")
+    target.open("w"){|file| file.write(b.to_xml)}
+    target
   end
 
 end
