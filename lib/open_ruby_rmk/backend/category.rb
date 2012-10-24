@@ -33,6 +33,9 @@
 #  item2[:type] = "ice"
 #  items.entries << item2
 #
+#  # Add another item using hash
+#  items << {:name => "Dirty thing", :type => "earth" }
+#
 #  # Attributes used in this category
 #  # TODO: Enforce the same attributes for every entry
 #  p items.attributes #=> ["name", "type"]
@@ -98,8 +101,9 @@ class OpenRubyRMK::Backend::Category
     #Creates a new and empty entry.
     #==Return value
     #The new instance.
-    def initialize
-      @attributes = Hash.new{|hsh, k| hsh[k] = ""}
+    def initialize(hsh = {})
+      @attributes = Hash.new("".freeze)
+      hsh.each {|k,v| self[k]=v}
     end
 
     #Gets the value of the named attribute. +name+ will
