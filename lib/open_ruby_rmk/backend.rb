@@ -1,4 +1,5 @@
 require "fileutils"
+require "set"
 require "pathname"
 require "yaml"
 require "nokogiri"

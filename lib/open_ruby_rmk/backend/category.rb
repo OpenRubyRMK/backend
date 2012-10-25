@@ -97,7 +97,7 @@ class OpenRubyRMK::Backend::Category
     #All attributes (and their values) for this
     #entry. Don’t modify this directly, use the
     #methods provided by this class.
-    attr_reader :attributes
+    attr_reader :category
 
     #Creates a new and empty entry.
     #==Parameter
@@ -121,6 +121,7 @@ class OpenRubyRMK::Backend::Category
     #Sets the value of the named attribtue. +name+
     #and +val+ will be converted to strings.
     def []=(name, val)
+      @category.check_attributes(self,name) if @category
       @attributes[name.to_s] = val.to_s
     end
 
@@ -143,16 +144,26 @@ class OpenRubyRMK::Backend::Category
 
     #Iterates over all attribute names and values.
     def each_attribute(&block)
+      return to_enum(__method__) unless block_given?
       @attributes.each_pair(&block)
+      return self
+    end
+    
+    def category=(cat)
+      return cat if @category == cat
+      @category.delete(self) if @category
+      cat << self if cat && cat.include?(self)
+      @category = cat
+      return cat
     end
 
   end
 
   #All attribute names allowed for entries in this
   #category.
-  attr_reader :allowed_attributes
+  #attr_reader :allowed_attributes
   #All Entry instances associated with this category.
-  attr_reader :entries
+  alias :entries :to_a
 
   ##
   # :attr_accessor: name
@@ -199,7 +210,7 @@ class OpenRubyRMK::Backend::Category
   #Create a new and empty category.
   def initialize(name)
     @name               = name.to_str
-    @allowed_attributes = []
+    @allowed_attributes = Set.new
     @entries            = []
   end
 
@@ -219,10 +230,12 @@ class OpenRubyRMK::Backend::Category
   #   If your entry contains an attribute that is not
   #   allowed in this category.
   def add_entry(entry)
-    entry.attributes.each_key do |attrname|
-      raise(UnknownAttribute.new(self, entry, attrname)) unless @allowed_attributes.include?(attrname)
-    end
+    entry = Entry.new(entry) unless entry.is_a?(Entry) 
+    entry.category = self
+    check_attributes(entry)
     @entries.push(entry)
+    
+    self
   end
 
   # Same as #add_entry, but returns +self+ for method
@@ -235,6 +248,14 @@ class OpenRubyRMK::Backend::Category
   #Iterates over each Entry in this Category.
   def each(&block)
     @entries.each(&block)
+  end
+
+  def check_attributes(entry,attrname = nil)
+    if attrname
+      raise(UnknownAttribute.new(self, entry, attrname)) unless @allowed_attributes.include?(attrname)
+    else
+      entry.each_attribute { |attrname,_| check_attributes(entry,attrname) }
+    end
   end
 
   # Add a new attribute to each entry in this category.
@@ -250,7 +271,7 @@ class OpenRubyRMK::Backend::Category
     name = name.to_s
     return if @allowed_attributes.include?(name)
 
-    @allowed_attributes << name
+    @allowed_attributes << name.dup.freeze
     @entries.each do |entry|
       entry[name] = nil # Autoconverted to an empty string
     end
@@ -268,6 +289,19 @@ class OpenRubyRMK::Backend::Category
       entry.delete(name)
     end
   end
+
+  def each_attribute(&block)
+    return to_enum(__method__) unless block_given?
+    @allowed_attributes.each(&block)
+    return self
+  end
+
+  def delete(entry)
+    return unless @entries.include?(entry)
+    @entries.delete(entry)
+    entry.category = nil
+  end
+
 
   # Saves a category out to disk, in the given
   # directory. The filename is the base64-encoded
