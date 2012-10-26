@@ -339,7 +339,7 @@ class OpenRubyRMK::Backend::Category
   # * If the attribute is already allowed, does nothing.
   def add_attribute(name)
     name = name.to_s
-    return if @allowed_attributes.include?(name)
+    return if valid_attribute?(name)
 
     @allowed_attributes << name.dup.freeze
     @entries.each do |entry|
@@ -352,7 +352,7 @@ class OpenRubyRMK::Backend::Category
   #If this attribute wasn’t existant before, does nothing.
   def delete_attribute(name)
     name = name.to_s
-    return unless @allowed_attributes.include?(name)
+    return unless valid_attribute?(name)
 
     @allowed_attributes.delete(name)
     @entries.each do |entry|
