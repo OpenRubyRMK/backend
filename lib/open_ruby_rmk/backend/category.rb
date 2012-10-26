@@ -107,10 +107,13 @@ class OpenRubyRMK::Backend::Category
   # of the #category accessor.
   class Entry
 
+    ##
+    # :attr_accessor: category
     # The Category instance this entry belongs to,
     # if any. Before assigning an entry to a category,
-    # this is +nil+.
-    attr_reader :category
+    # this is +nil+. This value is managed automatically
+    # for you, so you most likely don’t need to change it
+    # using this accessor (but if you have to, it is save).
 
     #Creates a new and empty entry.
     #==Parameter
@@ -187,9 +190,12 @@ class OpenRubyRMK::Backend::Category
       return self
     end
 
-    # Assign this entry to a category. This is an internal
-    # API that is automatically called whenever you move an
-    # Entry object around. Don’t call it directly.
+    # See accessor docs.
+    def category # :nodoc:
+      @category
+    end
+
+    # See accessor docs.
     def category=(cat) # :nodoc:
       return cat if @category == cat
       @category.delete(self) if @category
