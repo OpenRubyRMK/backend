@@ -7,7 +7,7 @@ class CategoryTest < Test::Unit::TestCase
   def test_creation
     cat = Category.new("stuff")
     assert_equal("stuff", cat.name)
-    assert_empty(cat.each_attribute.to_a)
+    assert_empty(cat.allowed_attributes)
     assert_empty(cat.entries)
   end
 
@@ -30,7 +30,7 @@ class CategoryTest < Test::Unit::TestCase
 
       # Read it back in
       items = Category.from_file(path)
-      assert_equal(2, items.count)
+      assert_equal(2, items.count) # ????
       assert_equal("Cool thing", items.entries.first[:name])
       assert_equal("fire", items.entries.last[:type])
     end
@@ -41,9 +41,9 @@ class CategoryTest < Test::Unit::TestCase
     cat.add_attribute("name")
     cat.add_attribute("usability")
     
-    assert_equal(2, cat.each_attribute.count)
-    assert_includes(cat.each_attribute.to_a, "name")
-    assert_includes(cat.each_attribute.to_a, "usability")
+    assert_equal(2, cat.allowed_attributes.count)
+    assert_includes(cat.allowed_attributes, "name")
+    assert_includes(cat.allowed_attributes, "usability")
     
     item = Category::Entry.new
     item[:name] = "Foo"
@@ -58,7 +58,7 @@ class CategoryTest < Test::Unit::TestCase
     assert_raises(Category::UnknownAttribute){cat << item}
 
     cat.delete_attribute("usability")
-    refute_includes(cat.each_attribute.to_a, "usability")
+    refute_includes(cat.allowed_attributes, "usability")
     refute(item.include?(:usability), "Didn't delete `usability' attribute.")
     assert_equal("", item[:usability]) # Nonexistant attributes should return an empty string
   end

@@ -91,12 +91,25 @@ class OpenRubyRMK::Backend::Category
 
   end
 
-  #An entry in a category.
+  # This class represents a single entry in a category. It may
+  # have several attributes (accessible via #[] and #[]=), and
+  # initially doesn’t belong to a category. Using the
+  # Category#add_entry and Category#<< methods, you can do so,
+  # which will automatically prevent the Entry instance from
+  # reaching states that are invalid within the context of the
+  # category it is assigned to. For instance, if a category "items"
+  # doesn’t allow for an attribute "grow_rate", you can set this
+  # attribute on your entry nevertheless, as long as you don’t assign
+  # the entry to this particular category. If you do so, you will
+  # receive an exception; either allow the attribute in the Category
+  # instance (using Category#allow_attribute), or change the Entry.
+  # You can always check the category an entry is assigned to by use
+  # of the #category accessor.
   class Entry
 
-    #All attributes (and their values) for this
-    #entry. Don’t modify this directly, use the
-    #methods provided by this class.
+    # The Category instance this entry belongs to,
+    # if any. Before assigning an entry to a category,
+    # this is +nil+.
     attr_reader :category
 
     #Creates a new and empty entry.
@@ -108,7 +121,8 @@ class OpenRubyRMK::Backend::Category
     #The new instance.
     def initialize(hsh = {})
       @attributes = Hash.new{|h, k| h[k] = ""}
-      hsh.each {|k,v| self[k]=v}
+      @category   = nil
+      hsh.each {|k,v| self[k] = v}
     end
 
     #Gets the value of the named attribute. +name+ will
@@ -118,11 +132,29 @@ class OpenRubyRMK::Backend::Category
       @attributes[name.to_s]
     end
 
-    #Sets the value of the named attribtue. +name+
-    #and +val+ will be converted to strings.
+    # Sets the value of the named attribtue.
+    # == Parameters
+    # [name]
+    #   The name of the parameter to set. Autoconverted
+    #   to a string.
+    # [val]
+    #   The value to set it to. Autoconverted to a string.
+    # == Raises
+    # [UnknownAttribute]
+    #   If this Entry has already been assigned to a category,
+    #   and you try to set an attribute that isn’t allowed in
+    #   that category, this exception will be raised.
     def []=(name, val)
-      @category.check_attributes(self,name) if @category
-      @attributes[name.to_s] = val.to_s
+      begin
+        @attributes[name.to_s] = val.to_s
+        @category.check_attributes!(self) if @category
+      rescue UnknownAttribute
+        # Ensure we clean up the entry, so that if the user rescues
+        # this exception, the entry doesn’t have the attribute set
+        # nevertheless.
+        @attributes.delete(name.to_s)
+        raise # reraise
+      end
     end
 
     # Completely erases an attribute from the entry,
@@ -142,38 +174,52 @@ class OpenRubyRMK::Backend::Category
       @attributes.has_key?(name.to_s)
     end
 
-    #Iterates over all attribute names and values.
+    # call-seq:
+    #   each_attribute                    → an_enumerator
+    #   each_attribute{|name, value| ...} → self
+    #
+    # Iterates over all attribute names and values, which
+    # are passed as strings to the block. If no block is
+    # passed, returns an enumerator.
     def each_attribute(&block)
       return to_enum(__method__) unless block_given?
       @attributes.each_pair(&block)
       return self
     end
-    
-    def category=(cat)
+
+    # Assign this entry to a category. This is an internal
+    # API that is automatically called whenever you move an
+    # Entry object around. Don’t call it directly.
+    def category=(cat) # :nodoc:
       return cat if @category == cat
       @category.delete(self) if @category
       cat << self if cat && cat.include?(self)
       @category = cat
-      return cat
     end
 
   end
 
   #All attribute names allowed for entries in this
   #category.
-  #attr_reader :allowed_attributes
+  attr_reader :allowed_attributes
   #All Entry instances associated with this category.
+  attr_reader :entries
   alias :entries :to_a
 
   ##
   # :attr_accessor: name
-  #The category’s name.
+  # The category’s name.
+
+  ##
+  # :method: to_a
+  # Same as the #entries accessor.
 
   # Generates and returns a one-time file ID.
   # Only used when writing out the category files to
   # ensure they have unique filenames without having
   # to know anything about the other existing categories.
-  def self.generate_file_id
+  # Don’t call this directly.
+  def self.generate_file_id # :nodoc:
     @file_id ||= 0
 
     @file_id += 1
@@ -200,7 +246,7 @@ class OpenRubyRMK::Backend::Category
           add_attribute(attr_node["name"]) # NOP if already in
           entry[attr_node["name"]] = attr_node.text
         end
-        @entries << entry
+        add_entry(entry)
       end
     end
 
@@ -220,11 +266,17 @@ class OpenRubyRMK::Backend::Category
   end
 
   #See accessor.
-  def name
+  def name # :nodoc:
     @name
   end
 
   # Adds an Entry to this category.
+  # == Parameter
+  # [entry]
+  #   The Entry instance to add; it will automatically be assigned
+  #   this category. Alternatively, this can be a hash like the one
+  #   Entry::new accepts; the Entry instance will be constructed
+  #   implicitely for you and added to the category.
   # == Raises
   # [UnknownAttribute]
   #   If your entry contains an attribute that is not
@@ -232,10 +284,8 @@ class OpenRubyRMK::Backend::Category
   def add_entry(entry)
     entry = Entry.new(entry) unless entry.is_a?(Entry) 
     entry.category = self
-    check_attributes(entry)
+    check_attributes!(entry)
     @entries.push(entry)
-    
-    self
   end
 
   # Same as #add_entry, but returns +self+ for method
@@ -250,11 +300,25 @@ class OpenRubyRMK::Backend::Category
     @entries.each(&block)
   end
 
-  def check_attributes(entry,attrname = nil)
-    if attrname
-      raise(UnknownAttribute.new(self, entry, attrname)) unless @allowed_attributes.include?(attrname)
-    else
-      entry.each_attribute { |attrname,_| check_attributes(entry,attrname) }
+  # Checks whether +name+ is a valid attribute for entries
+  # in this category.
+  # == Parameter
+  # [name] The attribute name to check. Autoconverted to a string.
+  # == Return value
+  # Either true or false.
+  def valid_attribute?(name)
+    @allowed_attributes.include?(name.to_s)
+  end
+
+  # Checks whether +entry+ is valid in the context in this
+  # category. If it isn’t, raises an instance of UnknownAttribute,
+  # otherwise does nothing; in any case, doesn’t alter the
+  # state of neither the category nor the entry.
+  # This is an internal method called when you modify entries in
+  # categories.
+  def check_attributes!(entry) # :nodoc:
+    entry.each_attribute do |attr_name, attr_value|
+      raise(UnknownAttribute.new(self, entry, attr_name)) unless valid_attribute?(attr_name)
     end
   end
 
@@ -290,18 +354,27 @@ class OpenRubyRMK::Backend::Category
     end
   end
 
-  def each_attribute(&block)
+  # call-seq:
+  #   each_allowed_attribute             → an_enumerator
+  #   each_allowed_attribute{|name| ...} → self
+  #
+  # Iterates over all allowed attribute names, which are passed
+  # to the block as strings. Returns an enumerator if no block
+  # is given.
+  def each_allowed_attribute(&block)
     return to_enum(__method__) unless block_given?
     @allowed_attributes.each(&block)
     return self
   end
 
+  # Deletes an entry from this category. The entry has assigned
+  # +nil+ as the category afterwards.
+  # If +entry+ doesn’t belong to this category, does nothing.
   def delete(entry)
     return unless @entries.include?(entry)
     @entries.delete(entry)
     entry.category = nil
   end
-
 
   # Saves a category out to disk, in the given
   # directory. The filename is the base64-encoded
