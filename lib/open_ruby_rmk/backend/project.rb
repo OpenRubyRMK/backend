@@ -31,10 +31,13 @@ class OpenRubyRMK::Backend::Project
   #==Parameter
   #[path] The path to the project directory, i.e. the directory
   #       containing the bin/ subdirectory with the main RMK file.
+  #==Raises
+  #[NonexistantDirectory]
+  #  +path+ doesn’t exist.
   #==Return value
   #An instance of this class representing the project.
   def self.load_dir(path)
-    raise(ArgumentError, "Directory doesn't exist: #{path}!") unless File.directory?(path)
+    raise(OpenRubyRMK::Backend::Errors::NonexistantDirectory.new(path)) unless File.directory?(path)
 
     proj = allocate
     proj.instance_eval do
