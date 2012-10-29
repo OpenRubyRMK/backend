@@ -52,7 +52,7 @@ class ProjectTest < Test::Unit::TestCase
 
   def test_loading
     pr = Project.new(@tmpdir)
-    pr.root_maps << Map.new(1)
+    pr.add_root_map(Map.new(1))
     pr.root_maps.last[:name] = "foo-map"
     pr.save
 
@@ -71,7 +71,7 @@ class ProjectTest < Test::Unit::TestCase
   def test_saving
     pr = Project.new(@tmpdir)
     assert_equal(0, Nokogiri::XML(File.read(@tmpdir + "data" + "maps" + "maps.xml")).root.xpath("map").count)
-    pr.root_maps << Map.new(1)
+    pr.add_root_map(Map.new(1))
     pr.save
     assert_file(@tmpdir + "data" + "maps" + "0001.tmx")
     assert_equal(1, Nokogiri::XML(File.read(@tmpdir + "data" + "maps" + "maps.xml")).root.xpath("map").count)

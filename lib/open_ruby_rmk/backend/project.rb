@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 
 # A project is the toplevel entity the OpenRubyRMK copes with.
+# This is an observable object (by utilising Ruby’s Observable
+# module) that emits events for certain action. To subscribe
+# to this events, use something like the following:
+#
+#   project.observe(:root_map_added){|event, map| puts "Root map with ID #{map.id} added!"}
 class OpenRubyRMK::Backend::Project
   include OpenRubyRMK::Backend::Invalidatable
+  include OpenRubyRMK::Backend::Eventable
 
   #Struct encapsulating all the path information for a
   #single project.
@@ -24,7 +30,8 @@ class OpenRubyRMK::Backend::Project
   #This project’s main configuration, i.e. the parsed contents
   #of the +rmk+ file.
   attr_reader :config
-  # The root maps of a project.
+  # The root maps of a project. Don’t append to this directly,
+  # use #add_root_map.
   attr_reader :root_maps
 
   #Loads an OpenRubyRMK project from a project directory.
@@ -76,6 +83,14 @@ class OpenRubyRMK::Backend::Project
 
     # 2. Commit suicide
     invalidate!
+  end
+
+  # Adds a new root map to the project. All observers listening
+  # to the :root_map_added event will be notified.
+  def add_root_map(map)
+    changed
+    @root_maps << map
+    notify_observers(:root_map_added, :map => map)
   end
 
   # Saves all the project’s pecularities out to disk.
