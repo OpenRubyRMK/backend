@@ -70,7 +70,20 @@ module OpenRubyRMK::Backend::MapStorage
     # [*root_maps]
     #   All maps you want to be affected by this method, which
     #   normally are all root maps of your project.
+    # == Raises
+    # [DuplicateMapID]
+    #   Somewhere on the trees on your +root_maps+ an ID
+    #   occurs multiple times. Check the exception object
+    #   to find out what ID it exactly is. No files have
+    #   been modified/created if you get this exception,
+    #   so it is safe to resolve the problem and then try
+    #   saving again.
     def save_maps_tree(maps_dir, maptree_file, *root_maps)
+      # Ensure we have no duplicate IDs; this would corrupt
+      # the maps hierarchy file and at least one map file
+      # would be lost due to overwriting.
+      check_map_ids!(*root_maps)
+
       # 1. Create the maptree file
       # See the module docs for the exact format
       File.open(maptree_file, "w") do |file|
@@ -88,6 +101,25 @@ module OpenRubyRMK::Backend::MapStorage
         root_map.traverse(true){|map| map.save(maps_dir)}
       end
     end #save_tree
+
+    # Iterates through all +root_maps+ and their children
+    # and checks whether all maps in the trees have globally
+    # unique IDs. It not, raise an exception.
+    # == Parameters
+    # [*root_maps]
+    #   The root maps you want to start traversing at.
+    # == Raises
+    # [DuplicateMapID]
+    #   When a duplicate map ID is found somewhere on the trees.
+    def check_map_ids!(*root_maps)
+      seen_ids = []
+      root_maps.each do |root_map|
+        root_map.traverse(true) do |map|
+          raise(OpenRubyRMK::Backend::Errors::DuplicateMapID.new(map.id)) if seen_ids.include?(map.id)
+          seen_ids << map.id
+        end
+      end
+    end
 
     private
 

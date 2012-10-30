@@ -76,6 +76,9 @@ class ProjectTest < Test::Unit::TestCase
     pr.save
     assert_file(@tmpdir + "data" + "maps" + "0002.tmx")
     assert_equal(2, Nokogiri::XML(File.read(@tmpdir + "data" + "maps" + "maps.xml")).root.xpath("map").count)
+
+    pr.add_root_map(Map.new(2)) # Duplicate ID!
+    assert_raises(OpenRubyRMK::Backend::Errors::DuplicateMapID){pr.save}
   end
 
 end

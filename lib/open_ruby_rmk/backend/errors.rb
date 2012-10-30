@@ -22,4 +22,19 @@ module OpenRubyRMK::Backend::Errors
 
   end
 
+  # Raised when multiple maps having the same ID are
+  # detected.
+  class DuplicateMapID < OpenRubyRMKBackendError
+
+    # The duplicate map ID.
+    attr_reader :map_id
+
+    # Creates a new exception of this type.
+    def initialize(map_id, msg = nil)
+      super(msg || "Duplicate map ID #{map_id}!")
+      @map_id = map_id
+    end
+
+  end
+
 end
