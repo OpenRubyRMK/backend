@@ -65,8 +65,8 @@ class OpenRubyRMK::Backend::Project
   #A new instance of this class representing the created project.
   def initialize(path)
     @paths       = Paths.new(path)
-    @root_maps   = []
     create_skeleton
+    @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file) # Skeleton may (and most likely does) contain maps
     @config      = YAML.load_file(@paths.rmk_file.to_s)    
   end
 

@@ -52,14 +52,14 @@ class ProjectTest < Test::Unit::TestCase
 
   def test_loading
     pr = Project.new(@tmpdir)
-    pr.add_root_map(Map.new(1))
+    pr.add_root_map(Map.new(2))
     pr.root_maps.last[:name] = "foo-map"
     pr.save
 
     pr = Project.load_dir(@tmpdir)
     assert_equal(@tmpdir, pr.paths.root)
-    assert_equal(1, pr.root_maps.count)
-    assert_equal("foo-map", pr.root_maps.first[:name])
+    assert_equal(2, pr.root_maps.count)
+    assert_equal("foo-map", pr.root_maps.last[:name])
   end
 
   def test_deletion
@@ -70,11 +70,12 @@ class ProjectTest < Test::Unit::TestCase
 
   def test_saving
     pr = Project.new(@tmpdir)
-    assert_equal(0, Nokogiri::XML(File.read(@tmpdir + "data" + "maps" + "maps.xml")).root.xpath("map").count)
-    pr.add_root_map(Map.new(1))
-    pr.save
-    assert_file(@tmpdir + "data" + "maps" + "0001.tmx")
+    assert_file(@tmpdir + "data" + "maps" + "0001.tmx") # One map is in the skeleton by default
     assert_equal(1, Nokogiri::XML(File.read(@tmpdir + "data" + "maps" + "maps.xml")).root.xpath("map").count)
+    pr.add_root_map(Map.new(2)) # Now add a new map
+    pr.save
+    assert_file(@tmpdir + "data" + "maps" + "0002.tmx")
+    assert_equal(2, Nokogiri::XML(File.read(@tmpdir + "data" + "maps" + "maps.xml")).root.xpath("map").count)
   end
 
 end
