@@ -21,12 +21,9 @@ does the heavy work of what is exposed through GUI frontends.
   spec.add_development_dependency("paint")
 
   # Gem contents
-  spec.files = [Dir["bin/*"],
-                Dir["lib/**/*"],
-                Dir["test/**/*"],
-                "VERSION",
-                "README.rdoc",
-                "COPYING"].flatten
+  spec.files         = `git ls-files`.split("\n")
+  spec.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
+  spec.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   spec.has_rdoc         = true
   spec.extra_rdoc_files = ["README.rdoc", "COPYING"]
   spec.rdoc_options << "-t" << "The Backend's RDocs" << "-m" << "README.rdoc"
