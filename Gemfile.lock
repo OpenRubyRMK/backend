@@ -2,6 +2,9 @@ GEM
   remote: https://rubygems.org/
   specs:
     ansi (1.4.3)
+    emerald (0.0.1.alpha4)
+      rdoc (>= 3.12)
+      sass (>= 3.2.0)
     json (1.7.5)
     nokogiri (1.5.5)
     paint (0.8.5)
@@ -10,6 +13,7 @@ GEM
       json (~> 1.4)
     ruby-tmx (0.0.1.dev)
       nokogiri
+    sass (3.2.1)
     turn (0.9.6)
       ansi
 
@@ -17,6 +21,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  emerald
   nokogiri
   paint
   rake

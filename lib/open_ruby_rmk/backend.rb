@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require "fileutils"
 require "observer"
 require "set"
@@ -6,7 +7,13 @@ require "yaml"
 require "nokogiri"
 require "tiled_tmx"
 
+# Namespace for the OpenRubyRMK project.
 module OpenRubyRMK
+
+  # Namespace for the OpenRubyRMK’s backend library, i.e.
+  # the library containing the facilities to actually
+  # manipulate projects and their components. All GUIs
+  # build upon this.
   module Backend
 
     # The version of this software.

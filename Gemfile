@@ -9,4 +9,5 @@ group :development do
   gem "turn"
   gem "rake"
   gem "rdoc"
+  gem "emerald"
 end
