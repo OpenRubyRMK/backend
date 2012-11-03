@@ -11,15 +11,15 @@
 # tree file</i>; this is a simple XML file that describes the
 # way the maps area layed out. It has the following structure:
 #
-# <maps>
-#   <map id="1"><!-- A root map -->
-#     <map id="1-1"><!-- A child map -->
-#       <map id="1-1-1"/><!-- A grandchild map -->
+#   <maps>
+#     <map id="1"><!-- A root map -->
+#       <map id="1-1"><!-- A child map -->
+#         <map id="1-1-1"/><!-- A grandchild map -->
+#       </map>
+#       <map id="1-2"/><!-- Another child map -->
 #     </map>
-#     <map id="1-2"/><!-- Another child map -->
-#   </map>
-#   <map id="2"/><!-- Another root map -->
-# </maps>
+#     <map id="2"/><!-- Another root map -->
+#   </maps>
 #
 # This may be nested arbitrarily deep. Regarding the map files
 # itself, they use (as said before) the TMX format, which is

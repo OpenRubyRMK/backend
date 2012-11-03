@@ -1,4 +1,26 @@
 # -*- coding: utf-8 -*-
+
+# A map is the conglomerate of objects you interact most
+# with when playing a game. It has a unique ID that is used
+# to identify the map, and which is also used to name the
+# file a map resides in.
+#
+# Maps are organised in a hierarchical mannor where each
+# map can have any number of child maps. Those maps that
+# do not have a parent map themselves, are called _root maps_.
+# This list of root map is normally attached to a project,
+# so that it can access all available map through the map
+# tree.
+#
+# The map tree is stored inside a separate file called
+# the map tree or map hierarchy file, usually the
+# <tt>maps.xml</tt> file in the same directory in which
+# the maps reside. This means that loading a map directly
+# from a file without considering the hierarchy file will
+# give you a root map regardless of how it was saved
+# exactly. The storage and loading of the whole map hierarchy
+# (i.e. the maps plus the hierarchy information) is handled
+# by a separate worker module, MapStorage.
 class OpenRubyRMK::Backend::Map
 
   # The ID of the map. Unique within a project.
