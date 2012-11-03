@@ -80,6 +80,13 @@ class OpenRubyRMK::Backend::Map
     "#<#{self.class} '#{self[:name]}' (ID: #@id)>"
   end
 
+  # Two maps are considered equal if they have the
+  # same ID.
+  def ==(other)
+    return nil unless other.kind_of?(self.class)
+    @id == other.id
+  end
+
   # Correctly dissolves the relationship between this
   # map and its old parent (if any), then establishes
   # the new relationship to the new parent.
@@ -96,11 +103,64 @@ class OpenRubyRMK::Backend::Map
     @parent = map
   end
 
+  # Deletes this map (and all child maps!) from the map
+  # tree.
+  # Don’t use the object after this anymore; if it was
+  # a root map, be sure to delete it from your project’s
+  # list of root maps.
+  #
+  # Usually you want to call #delete! in order to also
+  # erase the map file from the hard disk.
+  def delete
+    self.parent = nil
+    @children.each{|map| map.delete}
+  end
+
+  # Calls #delete, then deletes the map file from the
+  # directory you pass.
+  # Don’t use the object after this anymore; if it was
+  # a root map, be sure to delete it from your project’s
+  # list of root maps.
+  def delete!(maps_dir)
+    delete
+    target = File.join(maps_dir, self.class.format_filename(@id))
+    File.delete(target)
+  end
+
   # Checks whether this is a root map and if so,
   # returns true, otherwise false. A root map is
   # a map without a parent map.
   def root?
     @parent.nil?
+  end
+
+  #Checks whether any of this map’s children is
+  #the given map. This is not done recursively,
+  #see #ancestor? for this.
+  #==Parameter
+  #[map] Either an ID or an instance of this class to check for.
+  #==Return value
+  #A truth value.
+  def has_child?(map)
+    id = map.kind_of?(self.class) ? map.id : map
+    @children.find{|map| map.id == id}
+  end
+
+  #Checks whether a map is somewhere an ancestor of
+  #another, i.e. any of its children’s children etc.
+  #contains the given map.
+  #==Parameter
+  #[map] Either an ID or an instance of this class to check for.
+  #==Return value
+  #Either +true+ or +false+.
+  def ancestor?(map)
+    id = map.kind_of?(self.class) ? map.id : map
+
+    traverse do |child|
+      return true if child.id == id
+    end
+
+    false
   end
 
   #call-seq:

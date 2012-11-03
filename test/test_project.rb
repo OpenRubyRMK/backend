@@ -4,18 +4,7 @@ require_relative "helpers"
 class ProjectTest < Test::Unit::TestCase
   include OpenRubyRMK
   include OpenRubyRMK::Backend
-
-  def assert_dir(path, msg = nil)
-    assert(File.directory?(path), msg || "Not a directory: #{path}")
-  end
-
-  def assert_file(path, msg = nil)
-    assert(File.file?(path), msg || "Not a file: #{path}")
-  end
-
-  def refute_exists(path, msg = nil)
-    assert(!File.exists?(path), msg || "File exists: #{path}")
-  end
+  include OpenRubyRMK::Backend::AdditionalAssertions
 
   def setup
     @tmpdir = Pathname.new(Dir.mktmpdir)
