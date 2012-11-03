@@ -7,10 +7,10 @@
 #
 # Maps are organised in a hierarchical mannor where each
 # map can have any number of child maps. Those maps that
-# do not have a parent map themselves, are called _root maps_.
-# This list of root map is normally attached to a project,
-# so that it can access all available map through the map
-# tree.
+# do not have a parent map themselves, are called <i>root
+# maps</i>. This list of root maps is normally attached to
+# a project, so that it can access all available maps through
+# the map tree.
 #
 # The map tree is stored inside a separate file called
 # the map tree or map hierarchy file, usually the
