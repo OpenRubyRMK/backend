@@ -55,7 +55,7 @@ class CategoryTest < Test::Unit::TestCase
     item = Category::Entry.new
     item[:grade_of_nonsense] = "100%"
     cat.delete_attribute(:grade_of_nonsense)
-    assert_raises(Category::UnknownAttribute){cat << item}
+    assert_raises(OpenRubyRMK::Backend::Errors::UnknownAttribute){cat << item}
 
     cat.delete_attribute("usability")
     refute_includes(cat.allowed_attributes, "usability")
@@ -81,14 +81,14 @@ class CategoryTest < Test::Unit::TestCase
     assert_equal("bar", entry["foo"])
 
     entry = Category::Entry.new(:baz => "blubb")
-    assert_raises(Category::UnknownAttribute){cat << entry}
+    assert_raises(OpenRubyRMK::Backend::Errors::UnknownAttribute){cat << entry}
 
     # Add an entry AFTER the call to Entry#initialize has
     # happened, i.e. the entry has no information that
     # we have a new attribute yet. It has to consult the
     # Category object again.
     cat.add_attribute("baz")
-    assert_nothing_raised(Category::UnknownAttribute){entry["baz"] = "foobar"}
+    assert_nothing_raised(OpenRubyRMK::Backend::Errors::UnknownAttribute){entry["baz"] = "foobar"}
     assert_equal("foobar", entry[:baz])
 
     # This snippet adds an invalid attribute *after* the
@@ -97,12 +97,12 @@ class CategoryTest < Test::Unit::TestCase
     # in the Category#<< method.
     entry = Category::Entry.new(:baz => "blubb")
     cat << entry
-    assert_raises(Category::UnknownAttribute){entry[:nonexistant] = "fuuuuuu"}
+    assert_raises(OpenRubyRMK::Backend::Errors::UnknownAttribute){entry[:nonexistant] = "fuuuuuu"}
     
     # Deleteing an entry from its category
     # disables the validation again.
     cat.delete(entry)
-    assert_nothing_raised(Category::UnknownAttribute){entry[:nonexistant] = "fuuuuuu"}
+    assert_nothing_raised(OpenRubyRMK::Backend::Errors::UnknownAttribute){entry[:nonexistant] = "fuuuuuu"}
   end
 
   def test_move_entries
@@ -119,9 +119,9 @@ class CategoryTest < Test::Unit::TestCase
     assert_equal(0, cat2.count)
     assert_equal("Bar", entry[:foo])
     
-    assert_raises(Category::UnknownAttribute){cat2 << entry}
+    assert_raises(OpenRubyRMK::Backend::Errors::UnknownAttribute){cat2 << entry}
     entry.delete(:foo)
-    assert_nothing_raised(Category::UnknownAttribute){cat2 << entry}
+    assert_nothing_raised(OpenRubyRMK::Backend::Errors::UnknownAttribute){cat2 << entry}
     
     assert_equal(0, cat1.count)
     assert_equal(1, cat2.count)

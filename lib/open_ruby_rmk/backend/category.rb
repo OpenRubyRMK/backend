@@ -59,38 +59,6 @@
 class OpenRubyRMK::Backend::Category
   include Enumerable
 
-  #Thrown when you try to create an entry with an attribute
-  #not allowed in the entry’s category.
-  class UnknownAttribute < StandardError # TODO: Proper exception hierarchy
-
-    # The category you wanted to add the errorneous entry to.
-    attr_reader :category
-    # The entry containing the errorneous attribute.
-    attr_reader :entry
-    #The name of the errorneous attribute.
-    attr_reader :attribute_name
-
-    # Create a new exception of this class.
-    # ==Parameters
-    # [category]
-    #   The entry’s target category.
-    # [entry]
-    #   The problematic entry.
-    # [attr]
-    #   The name of the faulty attribute.
-    # [msg (nil)]
-    #   Your custom error message.
-    # ==Return value
-    # The new exception.
-    def initialize(category, entry, attr, msg = nil)
-      super(msg || "The attribute #{attr} is not allowed in the #{category} category.")
-      @category       = category
-      @entry          = entry
-      @attribute_name = attr
-    end
-
-  end
-
   # This class represents a single entry in a category. It may
   # have several attributes (accessible via #[] and #[]=), and
   # initially doesn’t belong to a category. Using the
@@ -151,7 +119,7 @@ class OpenRubyRMK::Backend::Category
       begin
         @attributes[name.to_s] = val.to_s
         @category.check_attributes!(self) if @category
-      rescue UnknownAttribute
+      rescue OpenRubyRMK::Backend::Errors::UnknownAttribute
         # Ensure we clean up the entry, so that if the user rescues
         # this exception, the entry doesn’t have the attribute set
         # nevertheless.
@@ -324,7 +292,7 @@ class OpenRubyRMK::Backend::Category
   # categories.
   def check_attributes!(entry) # :nodoc:
     entry.each_attribute do |attr_name, attr_value|
-      raise(UnknownAttribute.new(self, entry, attr_name)) unless valid_attribute?(attr_name)
+      raise(OpenRubyRMK::Backend::Errors::UnknownAttribute.new(self, entry, attr_name)) unless valid_attribute?(attr_name)
     end
   end
 

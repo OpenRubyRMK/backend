@@ -37,4 +37,37 @@ module OpenRubyRMK::Backend::Errors
 
   end
 
+  #Thrown when you try to create an entry with an attribute
+  #not allowed in the entry’s category.
+  class UnknownAttribute < StandardError # TODO: Proper exception hierarchy
+
+    # The category you wanted to add the errorneous entry to.
+    attr_reader :category
+    # The entry containing the errorneous attribute.
+    attr_reader :entry
+    #The name of the errorneous attribute.
+    attr_reader :attribute_name
+
+    # Create a new exception of this class.
+    # ==Parameters
+    # [category]
+    #   The entry’s target category.
+    # [entry]
+    #   The problematic entry.
+    # [attr]
+    #   The name of the faulty attribute.
+    # [msg (nil)]
+    #   Your custom error message.
+    # ==Return value
+    # The new exception.
+    def initialize(category, entry, attr, msg = nil)
+      super(msg || "The attribute #{attr} is not allowed in the #{category} category.")
+      @category       = category
+      @entry          = entry
+      @attribute_name = attr
+    end
+
+  end
+
+
 end
