@@ -34,7 +34,7 @@ class ProjectTest < Test::Unit::TestCase
     assert_file(@tmpdir + "data" + "maps" + "maps.xml")
     assert_dir(@tmpdir + "data" + "graphics" + "tilesets")
     assert_dir(@tmpdir + "data" + "scripts")
-    assert_equal(Backend::VERSION, pr.config["open_ruby_rmk"]["version"])
+    assert_equal(Backend.version, pr.config["open_ruby_rmk"]["version"])
     assert(pr.config["project"]["name"], "Project has no full name!")
     assert_equal("0.0.1", pr.config["project"]["version"])
   end
@@ -68,6 +68,11 @@ class ProjectTest < Test::Unit::TestCase
 
     pr.add_root_map(Map.new(2)) # Duplicate ID!
     assert_raises(OpenRubyRMK::Backend::Errors::DuplicateMapID){pr.save}
+
+    pr = Project.new(@tmpdir)
+    pr.config["foo"] = "bar"
+    pr.save
+    assert_equal("bar", YAML.load_file(@tmpdir.join("bin", "#{@tmpdir.basename}.rmk"))["foo"])
   end
 
 end

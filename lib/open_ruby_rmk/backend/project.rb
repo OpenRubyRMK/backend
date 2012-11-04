@@ -95,6 +95,7 @@ class OpenRubyRMK::Backend::Project
 
   # Saves all the project’s pecularities out to disk.
   def save
+    @paths.rmk_file.open("w"){|f| YAML.dump(@config, f)}
     OpenRubyRMK::Backend::MapStorage.save_maps_tree(@paths.maps_dir, @paths.maps_file, *@root_maps)
   end
 
