@@ -16,13 +16,17 @@ module OpenRubyRMK
   # build upon this.
   module Backend
 
-    # The version of this software.
-    VERSION = "0.0.1-dev"
-
     # Root directory of the backend library.
     ROOT_DIR = Pathname.new(__FILE__).dirname.parent.parent
     # data/ directory under ROOT_DIR.
     DATA_DIR = ROOT_DIR + "data"
+    # Path to the VERSION file.
+    VERSION_FILE = ROOT_DIR + "VERSION"
+
+    # The version of this software.
+    def self.version
+      VERSION_FILE.read.chomp
+    end
 
   end
 end
