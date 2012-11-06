@@ -105,3 +105,5 @@ require_relative "backend/map_storage"
 require_relative "backend/project"
 require_relative "backend/map"
 require_relative "backend/category"
+require_relative "backend/resource"
+

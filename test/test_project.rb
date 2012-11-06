@@ -21,8 +21,9 @@ class ProjectTest < Test::Unit::TestCase
     assert_equal(@tmpdir + "data", pr.paths.data_dir)
     assert_equal(@tmpdir + "data" + "maps", pr.paths.maps_dir)
     assert_equal(@tmpdir + "data" + "maps" + "maps.xml", pr.paths.maps_file)
-    assert_equal(@tmpdir + "data" + "graphics", pr.paths.graphics_dir)
-    assert_equal(@tmpdir + "data" + "graphics" + "tilesets", pr.paths.tilesets_dir)
+    assert_equal(@tmpdir + "data" + "resources", pr.paths.resources_dir)
+    assert_equal(@tmpdir + "data" + "resources" + "graphics", pr.paths.graphics_dir)
+    assert_equal(@tmpdir + "data" + "resources" + "graphics" + "tilesets", pr.paths.tilesets_dir)
     assert_equal(@tmpdir + "data" + "scripts", pr.paths.scripts_dir)
   end
 
@@ -32,11 +33,13 @@ class ProjectTest < Test::Unit::TestCase
     assert_dir(@tmpdir + "data")
     assert_dir(@tmpdir + "data" + "maps")
     assert_file(@tmpdir + "data" + "maps" + "maps.xml")
-    assert_dir(@tmpdir + "data" + "graphics" + "tilesets")
+    assert_dir(@tmpdir + "data" + "resources" + "graphics" + "tilesets")
     assert_dir(@tmpdir + "data" + "scripts")
+    assert_file(@tmpdir + "data" + "resources" + "graphics" + "misc" + "ruby.png")
     assert_equal(Backend.version, pr.config[:open_ruby_rmk][:version])
     assert(pr.config[:project][:name], "Project has no full name!")
     assert_equal("0.0.1", pr.config[:project][:version])
+    assert_equal(@tmpdir + "data" + "resources" + "graphics" + "misc" + "ruby.png", pr.resources.first.path)
   end
 
   def test_loading

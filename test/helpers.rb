@@ -29,4 +29,32 @@ module OpenRubyRMK::Backend::AdditionalAssertions
     assert(!File.exists?(path), msg || "File exists: #{path}")
   end
 
+  # Asserts that +obj+ answers +true+ to <tt>frozen?</tt>.
+  # You  may specify an alternate failure message.
+  def assert_frozen(obj, msg = nil)
+    assert(obj.frozen?, msg || "Object not frozen: #{obj.inspect}")
+  end
+
+end
+
+# Some helper methods for accessing test fixtures,
+# i.e. test stub data.
+module OpenRubyRMK::Backend::Fixtures
+
+  # Directory where the fixtures reside in. A
+  # Pathname instance.
+  def fixtures_dir
+    Pathname.new(__FILE__).dirname + "fixtures"
+  end
+
+  # Tries to locate the fixture named +name+ and returns
+  # a Pathname to it. Raises a RuntimeError if the fixture
+  # cannot be found.
+  def fixture(name)
+    target = fixtures_dir + name
+    raise("Test fixture not found: #{target}") unless target.file?
+
+    target
+  end
+
 end

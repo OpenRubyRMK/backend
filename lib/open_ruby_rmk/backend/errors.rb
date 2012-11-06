@@ -22,6 +22,20 @@ module OpenRubyRMK::Backend::Errors
 
   end
 
+  # Raised when a file couldn’t be found.
+  class NonexistantFile < OpenRubyRMKBackendError
+
+    # The path in question, as a Pathname instance.
+    attr_reader :path
+
+    # Creates a new exception of this type.
+    def initialize(path, msg = nil)
+      super(msg || "The file '#{path}' couldn't be found.")
+      @path = Pathname.new(path)
+    end
+
+  end
+
   # Raised when multiple maps having the same ID are
   # detected.
   class DuplicateMapID < OpenRubyRMKBackendError
