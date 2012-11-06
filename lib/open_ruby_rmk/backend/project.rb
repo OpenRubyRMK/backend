@@ -49,7 +49,7 @@ class OpenRubyRMK::Backend::Project
     proj = allocate
     proj.instance_eval do
       @paths       = Paths.new(path)
-      @config      = YAML.load_file(@paths.rmk_file.to_s)
+      @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
       @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
     end
 
@@ -67,12 +67,12 @@ class OpenRubyRMK::Backend::Project
     @paths       = Paths.new(path)
     create_skeleton
     @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file) # Skeleton may (and most likely does) contain maps
-    @config      = YAML.load_file(@paths.rmk_file.to_s)    
+    @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
   end
 
   # Human-readable description.
   def inspect
-    "#<#{self.class} #{@paths.root} \"#{@config['name']}\">"
+    "#<#{self.class} #{@paths.root} \"#{@config[:name]}\">"
   end
 
   #Recursively deletes the project directory and invalidates this
@@ -95,7 +95,7 @@ class OpenRubyRMK::Backend::Project
 
   # Saves all the project’s pecularities out to disk.
   def save
-    @paths.rmk_file.open("w"){|f| YAML.dump(@config, f)}
+    @paths.rmk_file.open("w"){|f| YAML.dump(@config.recursively_stringify_keys, f)}
     OpenRubyRMK::Backend::MapStorage.save_maps_tree(@paths.maps_dir, @paths.maps_file, *@root_maps)
   end
 

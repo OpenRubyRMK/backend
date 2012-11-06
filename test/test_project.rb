@@ -34,9 +34,9 @@ class ProjectTest < Test::Unit::TestCase
     assert_file(@tmpdir + "data" + "maps" + "maps.xml")
     assert_dir(@tmpdir + "data" + "graphics" + "tilesets")
     assert_dir(@tmpdir + "data" + "scripts")
-    assert_equal(Backend.version, pr.config["open_ruby_rmk"]["version"])
-    assert(pr.config["project"]["name"], "Project has no full name!")
-    assert_equal("0.0.1", pr.config["project"]["version"])
+    assert_equal(Backend.version, pr.config[:open_ruby_rmk][:version])
+    assert(pr.config[:project][:name], "Project has no full name!")
+    assert_equal("0.0.1", pr.config[:project][:version])
   end
 
   def test_loading
