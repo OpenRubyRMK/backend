@@ -92,17 +92,17 @@ class OpenRubyRMK::Backend::Resource
 
   # True if this is considered a graphical resource.
   def graphic?
-    GRAPHIC_RESOURCE_EXTS.any?{|ext| @path.extname == ext}
+    GRAPHIC_RESOURCE_EXTS.include?(@path.extname)
   end
 
   # True if this is considered an audible resource.
   def audio?
-    AUDIO_RESOURCE_EXTS.any?{|ext| @path.extname == ext}
+    AUDIO_RESOURCE_EXTS.include?(@path.extname)
   end
 
   # True if this is considered a viewable resource.
   def video?
-    VIDEO_RESOURCE_EXTS.any?{|ext| @path.extname == ext}
+    VIDEO_RESOURCE_EXTS.include?(@path.extname)
   end
 
   # True if this resource is not considered to be
