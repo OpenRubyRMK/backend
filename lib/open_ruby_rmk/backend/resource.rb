@@ -10,6 +10,14 @@
 # class. Also note that modifying these objects is meaningless
 # (they only represent static information), hence they are
 # frozen by default.
+#
+# Each resource always refers to an existing file on the
+# filesystem (or at least it should), as well as a
+# <i>resource information file</i> that contains the
+# copyright information for that resoure. The latter is
+# a simple YAML file whose structure is exaplained in
+# the resource_info_files.rdoc document; it will automatically
+# be loaded when you call the ::new method of this class.
 class OpenRubyRMK::Backend::Resource
 
   # Files with one of these extensions are considered

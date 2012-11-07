@@ -1,0 +1,130 @@
+= Resource file format
+
+A <i>resource information file</i> is a special plaintext file
+accompanying each resource in the OpenRubyRMK. It contains copyright
+information about the respective resource which is parsed by the
+backend library and exposed to the frontend through the
+OpenRubyRMK::Backend::Resource class, which can be used to display
+this information to the user. They’re written in YAML[http://yaml.org]
+and can easily be edited with any kind of text editor.
+
+== File format
+
+Each resource information file consists of a (usually empty) YAML
+header and the actual YAML markup, which is required to define four
+keys with the appropriate values:
+
+[year]
+  The copyright year, i.e. the year when a resource was first
+  published by its original author.
+[author]
+  The original author of a resource who is holding the copyright on
+  it. This isn’t necessaryly a real person (although it usually is),
+  but can also be a legal person such as a company or organisation.
+[license]
+  Short name of the license, which should generally be understood
+  without having to read the whole license text. The following list
+  of commonly known license names is probably not exhaustive, but
+  generally you should try to stick to it. If a resource has a
+  completely foreign license, please place "special" as the license
+  name so users know they have to read the full license text.
+
+  * Creative Commons license abbreviations (CC-BY, CC-BY-SA, ...)
+  * GNU license abbreviations (GPL, LGPL, GPLv2, ...)
+  * MIT license abbreviation (MIT)
+  * BSD license abbreviation (BSDL)
+  * Ruby license abbreviation (Ruby, Ruby's)
+  * GNU Free Documentation license (GFDL)
+  * "Public Domain" for public domain work. Note that different
+    countries have different requirements for what is considered
+    to be "public domain".
+[extra]
+  Additional information on the license. It depends on the specific
+  resource what to put here, but if your resource came together with a
+  README, a copyright or license file, a usage notice or whatever, you
+  want to copy its contents into this field. If you put "special" as
+  the license name above, please place the whole license text here.
+
+The order of the keys doesn’t really matter, but for the sake of
+readability you should stick to the order in which they’re listed
+above, i.e. year-author-license-extra. This will ease everyone’s
+reading of your files.
+
+== File name
+
+Naming the resource information file is quite straightforward. If your
+resource is named <tt>foo.png</tt>, place the resource information
+file in the same directory as the resource file and name it
+<tt>foo.png.yml</tt>, i.e. the name of the resource file plus the
+<tt>.yml</tt> suffix (which indicates it’s a YAML file). Done.
+
+== Example
+
+Here is an example of a resource information file for the Ruby
+programming language’s logo (which is actually included in the default
+ORR distribution):
+
+  ---
+  year: 2006
+  author: Yukihiro Matsumoto
+  license: CC-BY-SA 2.5
+  extra: >-
+    The Ruby Logo is Copyright (c) 2006, Yukihiro Matsumoto. It is licensed
+    under the terms of the Creative Commons Attribution-ShareAlike 2.5
+    agreement:
+    
+    http://creativecommons.org/licenses/by-sa/2.5/
+    
+    We ask that you do not use the logo to represent something other than
+    the Ruby Programming language. If you have questions about the logo,
+    please join the VIT-Discuss mailing list and ask your questions there:
+    
+    http://rubyforge.org/mailman/listinfo/vit-discuss/
+    
+    Thank you,
+    
+    The Ruby Visual Identity Team
+
+Lets walk through it step by step. Starting at the top, we find this
+line:
+
+  ---
+
+This is the YAML header separator which divides the header from the
+markup body. The header is empty, so the separator is directly placed
+at the top of the file. If you want, you could even ommit it, but for
+the sake of having a syntactically valid YAML file you should leave it
+there.
+
+Next we find the definition of the copyright year:
+
+  year: 2006
+
+This tells us that whoever created the resource did so in 2006.
+
+  author: Yukihiro Matsumoto
+
+This is the guy who created the Ruby logo. If you’re a Ruby
+programmer, you probably know him--he’s the inventor of Ruby. Note
+that you should try to find out the author’s real name rather than
+placing a pseudonyme here as this ensures optimal legal
+defense. However, if you can’t figure it out for godness’ sake, just
+put the pseudonyme, but please *do* place something here, even if its
+"unknown" (never do this).
+
+  license: CC-BY-SA-2.5
+
+Mr. Matsumoto was so kind to license the beautiful Ruby logo under the
+CreativeCommons by-sharealike license, tied to version 2.5, so we
+include this information in the resource information file.
+
+  extra: >-
+    The Ruby Logo is...
+
+<tt>>-</tt> introduces a YAML text block on the next line. What
+follows is the full content of the +LICENSE+ file that comes with the
+Ruby logo if you download it from its {official
+site}[http://rubyidentity.org].
+
+That’s all. Place this file next to the resource <tt>ruby.png</tt> as
+<tt>ruby.png.yml</tt> and you can use it in the ORR.
