@@ -22,6 +22,7 @@
 # (i.e. the maps plus the hierarchy information) is handled
 # by a separate worker module, MapStorage.
 class OpenRubyRMK::Backend::Map
+  include OpenRubyRMK::Backend::Eventable
 
   # The ID of the map. Unique within a project.
   attr_reader :id
@@ -98,7 +99,9 @@ class OpenRubyRMK::Backend::Map
   #   The value of the property. Autoconverted to
   #   a string.
   def []=(name, value)
+    changed
     @tmx_map.properties[name.to_s] = value.to_s
+    notify_observers(:property_changed, :property => name, :value => value)
   end
 
   # Human-readable description.

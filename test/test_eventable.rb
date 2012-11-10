@@ -15,7 +15,7 @@ class EventableTest < Test::Unit::TestCase
     # Change the value, and notify all observers.
     def change_the_state!
       changed
-      @value = rand(100)
+      @value = 1 + rand(100)
       notify_observers(:state_changed, @value)
     end
 
@@ -23,7 +23,7 @@ class EventableTest < Test::Unit::TestCase
     # all observers.
     def change_the_state_differently!
       changed
-      @value = 0 - rand(100)
+      @value = -1 - rand(100)
       notify_observers(:state_changed_differently, @value)
     end
 
@@ -40,7 +40,7 @@ class EventableTest < Test::Unit::TestCase
     end
 
     # Callback called by ObservedThing.
-    def update(event, value)
+    def update(event, emitter, value)
       @results << event
     end
 
@@ -50,7 +50,7 @@ class EventableTest < Test::Unit::TestCase
     # Without a filter
     target = ObservedThing.new
     results = []
-    target.observe{|event, value| results << event}
+    target.observe{|event, emitter, value| results << event}
     target.change_the_state!
     target.change_the_state_differently!
     target.change_the_state!
@@ -59,7 +59,7 @@ class EventableTest < Test::Unit::TestCase
     # With filter
     target = ObservedThing.new
     results = []
-    target.observe(:state_changed){|event, value| results << event}
+    target.observe(:state_changed){|event, emitter, value| results << event}
     target.change_the_state!
     target.change_the_state_differently!
     target.change_the_state!
@@ -68,11 +68,16 @@ class EventableTest < Test::Unit::TestCase
     # Different filter
     target = ObservedThing.new
     results = []
-    target.observe(:state_changed_differently){|event, value| results << event}
+    target.observe(:state_changed_differently){|event, emitter, value| results << event}
     target.change_the_state!
     target.change_the_state_differently!
     target.change_the_state!
     assert_equal([:state_changed_differently], results)
+
+    # Ensure the emitter is as expected
+    target = ObservedThing.new
+    target.observe{|event, emitter, value| assert_equal(target, emitter)}
+    target.observe(:state_changed){|event, emitter, value| assert_equal(target, emitter)}
   end
 
   def test_observe_classes
@@ -83,6 +88,13 @@ class EventableTest < Test::Unit::TestCase
     target.change_the_state_differently!
     target.change_the_state!
     assert_equal([:state_changed, :state_changed_differently, :state_changed], observer.results)
+  end
+
+  def test_observe_values
+    target = ObservedThing.new
+    target.observe{|event, emitter, value| assert_not_equal(0, value)}
+    target.observe(:state_changed){|event, emitter, value| assert_greater_than(0, value)}
+    target.observe(:state_changed_differently){|event, emitter, value| assert_less_than(0, value)}
   end
 
 end

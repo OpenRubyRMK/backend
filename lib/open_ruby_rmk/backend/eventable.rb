@@ -36,11 +36,18 @@ module OpenRubyRMK::Backend::Eventable
   #   an event of this type. If this is +nil+, the callback
   #   is always fired when the observed object changes.
   def observe(target_event = nil)
-    callback = lambda do |event, info|
-      yield(event, info) if !target_event || event == target_event
+    callback = lambda do |event, emitter, info|
+      yield(event, emitter, info) if !target_event || event == target_event
     end
 
     add_observer(callback, :call)
+  end
+
+  # Works the same way as Observable#notify_observers, but
+  # automatically inserts +self+ as the second argument to
+  # the +super+ call so that observers know who called.
+  def notify_observers(event, info)
+    super(event, self, info)
   end
 
 end

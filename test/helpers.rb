@@ -30,9 +30,23 @@ module OpenRubyRMK::Backend::AdditionalAssertions
   end
 
   # Asserts that +obj+ answers +true+ to <tt>frozen?</tt>.
-  # You  may specify an alternate failure message.
+  # You may specify an alternate failure message.
   def assert_frozen(obj, msg = nil)
     assert(obj.frozen?, msg || "Object not frozen: #{obj.inspect}")
+  end
+
+  # Asserts that +real+ is less than +expectation+
+  # (utilising the +<+ method). You may specify an
+  # alternate failure message.
+  def assert_less_than(expectation, real, msg = nil)
+    assert(real < expectation, msg || "Expected #{real} to be less than #{expectation}.")
+  end
+
+  # Asserts that +real+ is greater than +expectation+
+  # (utilising the +>+ method). You may specify an
+  # alternate failure message.
+  def assert_greater_than(expectation, real, msg = nil)
+    assert(real > expectation, msg || "Expected #{real} to be greater than #{expectation}.")
   end
 
 end
