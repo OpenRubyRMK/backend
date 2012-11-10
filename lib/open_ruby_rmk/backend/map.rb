@@ -33,7 +33,7 @@ class OpenRubyRMK::Backend::Map
   attr_reader :parent
 
   # The underlying TiledTmx::Map object.
-  attr_reader :tiled_map
+  attr_reader :tmx_map
 
   # Returns the filename a map with ID +id+ is expected
   # to reside in.
@@ -68,9 +68,13 @@ class OpenRubyRMK::Backend::Map
     @children = []
     @parent   = nil
 
-    # Set a default map name (this is not required, but improves
-    # clarity).
-    self[:name] = "Map_#@id"
+    # Set some default map values
+    @tmx_map.width       = 20
+    @tmx_map.height      = 15
+    @tmx_map.orientation = :orthogonal
+    @tmx_map.tilewidth   = 32
+    @tmx_map.tileheight  = 32
+    self[:name]          = "Map_#@id"
   end
 
   # Read extra properties from the map, e.g.
