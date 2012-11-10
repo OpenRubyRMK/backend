@@ -4,8 +4,13 @@
 # OpenRubyRMK backend library uses.
 module OpenRubyRMK::Backend::Errors
 
+  # Base class for all exceptions in all OpenRubyRMK
+  # libraries.
+  class OpenRubyRMKError < StandardError
+  end
+
   # Base class for all exceptions in this library.
-  class OpenRubyRMKBackendError < StandardError
+  class OpenRubyRMKBackendError < OpenRubyRMKError
   end
 
   # Raised when a directory couldn’t be found.
