@@ -180,8 +180,8 @@ class OpenRubyRMK::Backend::Map
   #   extra parameters.
   def delete
     changed
-    self.parent = nil
     @children.each{|map| map.delete}
+    self.parent = nil
     notify_observers(:map_deleted)
   end
 
