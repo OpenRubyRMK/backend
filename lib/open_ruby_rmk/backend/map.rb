@@ -98,10 +98,15 @@ class OpenRubyRMK::Backend::Map
   # [value]
   #   The value of the property. Autoconverted to
   #   a string.
+  # == Events
+  # [property_changed]
+  #   Issued always when this method is called. The callback
+  #   info hash gets :property and :value keys passed, representing
+  #   the changed property (both are strings).
   def []=(name, value)
     changed
     @tmx_map.properties[name.to_s] = value.to_s
-    notify_observers(:property_changed, :property => name, :value => value)
+    notify_observers(:property_changed, :property => name.to_s, :value => value.to_s)
   end
 
   # Human-readable description.
