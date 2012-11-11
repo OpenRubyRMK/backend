@@ -72,4 +72,23 @@ class MapStorageTest < Test::Unit::TestCase
 
     assert_raises(OpenRubyRMK::Backend::Errors::DuplicateMapID){MapStorage.save_maps_tree(@tmpdir, @maps_file, @root)}
   end
+
+  def test_map_deletions
+    # First save the whole map tree
+    create_maps_tree
+    MapStorage.save_maps_tree(@tmpdir, @maps_file, @root)
+
+    # Than unmount a subtree from the main tree
+    @root.children.first.unmount
+
+    # And now ensure that the unmounted maps’ files are gone
+    # after saving again.
+    MapStorage.save_maps_tree(@tmpdir, @maps_file, @root)
+    assert_file(@tmpdir + "maps.xml") # The maptree file must exist
+    assert_file(@tmpdir + "0001.tmx") # We didn’t delete this map
+    refute_exists(@tmpdir + "0002.tmx")
+    refute_exists(@tmpdir + "0003.tmx")
+    refute_exists(@tmpdir + "0004.tmx")
+  end
+
 end

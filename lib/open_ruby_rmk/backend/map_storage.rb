@@ -79,14 +79,22 @@ module OpenRubyRMK::Backend::MapStorage
     #   so it is safe to resolve the problem and then try
     #   saving again.
     def save_maps_tree(maps_dir, maptree_file, *root_maps)
+      maps_dir     = Pathname.new(maps_dir)
+      maptree_file = Pathname.new(maptree_file)
+
       # Ensure we have no duplicate IDs; this would corrupt
       # the maps hierarchy file and at least one map file
       # would be lost due to overwriting.
       check_map_ids!(*root_maps)
 
+      # 0. Wipe out the entire maps folder, so we effectively
+      # delete map files whose maps have been unmounted from
+      # the map tree.
+      maps_dir.each_child{|path| path.delete}
+
       # 1. Create the maptree file
       # See the module docs for the exact format
-      File.open(maptree_file, "w") do |file|
+      maptree_file.open("w") do |file|
         b = Nokogiri::XML::Builder.new do |xml|
           xml.maps do |maptree|
             root_maps.each{|map| add_map_to_tree(map, maptree)}
