@@ -78,4 +78,35 @@ class ProjectTest < Test::Unit::TestCase
     assert_equal("bar", YAML.load_file(@tmpdir.join("bin", "#{@tmpdir.basename}.rmk"))["foo"])
   end
 
+  def test_root_maps
+    pr = Project.new(@tmpdir)
+    assert_equal(1, pr.root_maps.count)
+
+    m2 = Map.new(2)
+    pr.add_root_map(m2)
+    assert_equal(2, pr.root_maps.count)
+
+    m3 = Map.new(3)
+    pr.add_root_map(m3)
+    assert_equal(3, pr.root_maps.count)
+
+    pr.remove_root_map(m2)
+    assert_equal(2, pr.root_maps.count)
+
+    # Not a root map
+    m4 = Map.new(4)
+    m4.parent = m3
+    assert_equal(2, pr.root_maps.count)
+    pr.remove_root_map(m4)
+    assert_equal(2, pr.root_maps.count) # Nothing done
+
+    # Invalid case where the map was deleted from
+    # the disk  but not from the project. Calling
+    # #remove_root_map after this will result in
+    # undefined behaviour and hence isn’t tested
+    # here.
+    pr.root_maps.first.delete!(pr.paths.maps_dir)
+    assert_equal(2, pr.root_maps.count)
+  end
+
 end

@@ -46,7 +46,7 @@ module OpenRubyRMK::Backend::Eventable
   # Works the same way as Observable#notify_observers, but
   # automatically inserts +self+ as the second argument to
   # the +super+ call so that observers know who called.
-  def notify_observers(event, info)
+  def notify_observers(event, info = {})
     super(event, self, info)
   end
 

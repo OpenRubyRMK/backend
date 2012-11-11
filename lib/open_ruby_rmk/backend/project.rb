@@ -31,8 +31,8 @@ class OpenRubyRMK::Backend::Project
   #This project’s main configuration, i.e. the parsed contents
   #of the +rmk+ file.
   attr_reader :config
-  # The root maps of a project. Don’t append to this directly,
-  # use #add_root_map.
+  # The root maps of a project. Don’t work on this directly,
+  # use #add_root_map and #remove_root_map.
   attr_reader :root_maps
   # All the graphics, music, etc. files available to a project.
   # An array of Resource objects.
@@ -93,12 +93,39 @@ class OpenRubyRMK::Backend::Project
     invalidate!
   end
 
-  # Adds a new root map to the project. All observers listening
-  # to the :root_map_added event will be notified.
+  # Adds a new root map to the project.
+  # == Events
+  # [root_map_added]
+  #   Always issued when this method is called. The :map
+  #   parameter will receive the added Map instance.
   def add_root_map(map)
     changed
     @root_maps << map
     notify_observers(:root_map_added, :map => map)
+  end
+
+  # Removes a root map from the project. Does nothing
+  # if the +map+ isn’t a root map of this project.
+  # == Parameters
+  # [map]
+  #   The Map instance to delete from the list of root
+  #   maps.
+  # == Events
+  # [root_map_removed]
+  #   Always issued when this method is called. The
+  #   :map parameter will receive the removed Map
+  #   instance.
+  # == Remarks
+  # This method doesn *not* delete the map from the filesystem.
+  # Call Map#delete! for this after you removed it from the
+  # project. Also note that *after*. You can’t remove a deleted
+  # root map as the Map instance will be invalid.
+  def remove_root_map(map)
+    return unless @root_maps.include?(map)
+
+    changed
+    @root_maps.delete(map)
+    notify_observers(:root_map_removed, :map => map)
   end
 
   # Saves all the project’s pecularities out to disk.

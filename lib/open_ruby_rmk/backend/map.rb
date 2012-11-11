@@ -174,9 +174,15 @@ class OpenRubyRMK::Backend::Map
   #
   # Usually you want to call #delete! in order to also
   # erase the map file from the hard disk.
+  # == Events
+  # [map_deleted]
+  #   Always issued when you call this method. Has no
+  #   extra parameters.
   def delete
+    changed
     self.parent = nil
     @children.each{|map| map.delete}
+    notify_observers(:map_deleted)
   end
 
   # Calls #delete, then deletes the map file from the
