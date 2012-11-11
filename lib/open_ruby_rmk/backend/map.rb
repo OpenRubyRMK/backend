@@ -21,6 +21,26 @@
 # exactly. The storage and loading of the whole map hierarchy
 # (i.e. the maps plus the hierarchy information) is handled
 # by a separate worker module, MapStorage.
+#
+# == Map tree fun
+# The map tree is exactly that: A tree of maps. Each map knows
+# about its immediate parent as well as its immediate children.
+# This has the nice effect that to associate a Project with all
+# the maps, you just have to know about the little list of root
+# maps that don’t have a parent themselves (and for which #root?
+# returns true). However, you aren’t limited to inspecting the
+# tree. You can do all those evil kinds of things with it that
+# are possible with a tree, i.e. you can remove entire subtrees,
+# add those or just remount them elsewhere in the tree (but note
+# it is not possible to mount the same subtree in different
+# places in the map tree--that would be insidious). To reflect
+# what these operations do, you should make use of the #mount
+# and #unmount methods, which mount a subtree onto another
+# tree at the specified point or remove it from there,
+# respectively. You could also use the #parent= method, but
+# #mount and #unmount is usually more clear as it resembles
+# the terminology generally known from Linux file system
+# operations (the +mount+ and +umount+ commands).
 class OpenRubyRMK::Backend::Map
   include OpenRubyRMK::Backend::Eventable
 
@@ -123,7 +143,9 @@ class OpenRubyRMK::Backend::Map
 
   # Correctly dissolves the relationship between this
   # map and its old parent (if any), then establishes
-  # the new relationship to the new parent.
+  # the new relationship to the new parent. To improve
+  # readability, you usually want to call #mount and
+  # #unmount instead.
   # == Events
   # [parent_changed]
   #   Always emitted when this method is called. The info
@@ -166,34 +188,21 @@ class OpenRubyRMK::Backend::Map
     notify_observers(:parent_changed, :new_parent => map)
   end
 
-  # Deletes this map (and all child maps!) from the map
-  # tree.
-  # Don’t use the object after this anymore; if it was
-  # a root map, be sure to delete it from your project’s
-  # list of root maps.
-  #
-  # Usually you want to call #delete! in order to also
-  # erase the map file from the hard disk.
-  # == Events
-  # [map_deleted]
-  #   Always issued when you call this method. Has no
-  #   extra parameters.
-  def delete
-    changed
-    @children.each{|map| map.delete}
+  # Convenience method for calling:
+  #   map.parent = nil
+  # Improves readability by expressing "unmount this map
+  # from the map tree".
+  def unmount
     self.parent = nil
-    notify_observers(:map_deleted)
   end
+  alias umount unmount # You’re a freak. You really don’t want to tell me umount is better than unmount, do you?
 
-  # Calls #delete, then deletes the map file from the
-  # directory you pass.
-  # Don’t use the object after this anymore; if it was
-  # a root map, be sure to delete it from your project’s
-  # list of root maps.
-  def delete!(maps_dir)
-    delete
-    target = File.join(maps_dir, self.class.format_filename(@id))
-    File.delete(target)
+  # Convenience method for calling:
+  #   map.parent = parent_map
+  # Improves readability by expressing "mount this map
+  # into the map tree at this specific point".
+  def mount(parent_map)
+    self.parent = parent_map
   end
 
   # Checks whether this is a root map and if so,

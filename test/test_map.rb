@@ -81,7 +81,7 @@ class MapTest < Test::Unit::TestCase
     #   |
     # grandgrandchild_map
     grandchild_map.parent = root_map
-    child_map.delete
+    child_map.unmount
     assert_equal(1, root_map.children.count)
     assert_equal(grandchild_map, root_map.children.first)
     assert_equal(root_map, grandchild_map.parent)
@@ -91,7 +91,7 @@ class MapTest < Test::Unit::TestCase
     # root_map
     #   |
     # (nothing)
-    grandchild_map.delete
+    grandchild_map.unmount
     assert_empty(root_map.children)
   end
 

@@ -99,14 +99,6 @@ class ProjectTest < Test::Unit::TestCase
     assert_equal(2, pr.root_maps.count)
     pr.remove_root_map(m4)
     assert_equal(2, pr.root_maps.count) # Nothing done
-
-    # Invalid case where the map was deleted from
-    # the disk  but not from the project. Calling
-    # #remove_root_map after this will result in
-    # undefined behaviour and hence isn’t tested
-    # here.
-    pr.root_maps.first.delete!(pr.paths.maps_dir)
-    assert_equal(2, pr.root_maps.count)
   end
 
 end
