@@ -130,16 +130,34 @@ class OpenRubyRMK::Backend::Map
   #   hash has a key :new_parent that contains the new
   #   parent map as a Backend::Map instance (or +nil+ if
   #   the map was made a root map).
+  # [child_removed]
+  #   Emitted on the old parent map object if this map had
+  #   a parent previously. Passes +self+ as :old_child.
+  # [child_added]
+  #   Emitted on the new parent +map+ object passed to this
+  #   method unless it’s +nil+. Passes +self+ as :new_child.
+  # == Remarks
+  # This is a quite expensive operation that causes many
+  # callbacks to be run which in turn may also do heavy
+  # work.
   def parent=(map)
     changed
 
     # Unless we’re a root map, delete us from the
     # old parent.
-    @parent.children.delete(self) if @parent
+    if @parent
+      @parent.changed
+      @parent.children.delete(self)
+      @parent.notify_observers(:child_removed, :old_child => self)
+    end
 
     # Unless we’re made a root map now, add us to the
     # new parent.
-    map.children << self if map
+    if map
+      map.changed
+      map.children << self
+      map.notify_observers(:child_added, :new_child => map)
+    end
 
     # Update our side of the relationship.
     @parent = map
