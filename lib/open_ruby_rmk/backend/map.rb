@@ -101,12 +101,12 @@ class OpenRubyRMK::Backend::Map
   # == Events
   # [property_changed]
   #   Issued always when this method is called. The callback
-  #   info hash gets :property and :value keys passed, representing
+  #   info hash gets :property and :new_value keys passed, representing
   #   the changed property (both are strings).
   def []=(name, value)
     changed
     @tmx_map.properties[name.to_s] = value.to_s
-    notify_observers(:property_changed, :property => name.to_s, :value => value.to_s)
+    notify_observers(:property_changed, :property => name.to_s, :new_value => value.to_s)
   end
 
   # Human-readable description.
@@ -124,7 +124,15 @@ class OpenRubyRMK::Backend::Map
   # Correctly dissolves the relationship between this
   # map and its old parent (if any), then establishes
   # the new relationship to the new parent.
+  # == Events
+  # [parent_changed]
+  #   Always emitted when this method is called. The info
+  #   hash has a key :new_parent that contains the new
+  #   parent map as a Backend::Map instance (or +nil+ if
+  #   the map was made a root map).
   def parent=(map)
+    changed
+
     # Unless we’re a root map, delete us from the
     # old parent.
     @parent.children.delete(self) if @parent
@@ -135,6 +143,9 @@ class OpenRubyRMK::Backend::Map
 
     # Update our side of the relationship.
     @parent = map
+
+    # Notify subscribers
+    notify_observers(:parent_changed, :new_parent => map)
   end
 
   # Deletes this map (and all child maps!) from the map
