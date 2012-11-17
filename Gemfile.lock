@@ -1,3 +1,10 @@
+GIT
+  remote: git://github.com/Quintus/tmx-ruby.git
+  revision: f3548929c124ad0814af3d4717c9c3e5342cbb9d
+  specs:
+    ruby-tmx (0.0.1.dev)
+      nokogiri
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -11,8 +18,6 @@ GEM
     rake (0.9.2.2)
     rdoc (3.12)
       json (~> 1.4)
-    ruby-tmx (0.0.1.dev)
-      nokogiri
     sass (3.2.1)
     turn (0.9.6)
       ansi
@@ -26,5 +31,5 @@ DEPENDENCIES
   paint
   rake
   rdoc
-  ruby-tmx
+  ruby-tmx!
   turn

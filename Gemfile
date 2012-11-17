@@ -1,7 +1,7 @@
 # -*- ruby -*-
 source "https://rubygems.org"
 
-gem "ruby-tmx"
+gem "ruby-tmx", :git => "git://github.com/Quintus/tmx-ruby.git"
 gem "nokogiri"
 
 group :development do

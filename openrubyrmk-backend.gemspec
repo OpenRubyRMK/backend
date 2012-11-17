@@ -1,3 +1,4 @@
+# -*- ruby -*-
 GEMSPEC = Gem::Specification.new do |spec|
 
   # Project information
