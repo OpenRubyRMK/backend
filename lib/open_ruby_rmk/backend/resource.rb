@@ -42,13 +42,6 @@ class OpenRubyRMK::Backend::Resource
   # Full absolute path to the resource’s copyright information file.
   attr_reader :info_file
 
-  # The copyright information. A struct with the following attributes:
-  # [year]    The copyright year.
-  # [author]  The (legal) person holding the rights on the resource.
-  # [license] The licensing terms.
-  # [extra]   Further information, usually the full license text or some extra notes.
-  attr_reader :info
-
   # The copyright information of this resource. A CopyrightInfo
   # struct.
   attr_reader :copyright
