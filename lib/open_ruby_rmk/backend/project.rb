@@ -116,10 +116,8 @@ class OpenRubyRMK::Backend::Project
   #   :map parameter will receive the removed Map
   #   instance.
   # == Remarks
-  # This method doesn *not* delete the map from the filesystem.
-  # Call Map#delete! for this after you removed it from the
-  # project. Also note that *after*. You can’t remove a deleted
-  # root map as the Map instance will be invalid.
+  # This method doesn *not* delete the map from the filesystem
+  # immediately, this will be done when calling Project#save.
   def remove_root_map(map)
     return unless @root_maps.include?(map)
 
@@ -138,7 +136,12 @@ class OpenRubyRMK::Backend::Project
   # updates the list of resources. This is called automatically
   # when creating/loading a project, so you don’t have to call
   # it manually in these cases.
+  # == Events
+  # [resources_reloaded]
+  #   Always fired when this method is called. It receives
+  #   no additional parameters.
   def reload_resources!
+    changed
     @resources = []
 
     @paths.resources_dir.find do |path|
@@ -153,6 +156,8 @@ class OpenRubyRMK::Backend::Project
 
     # This can’t be modified for safety reasons.
     @resources.freeze
+
+    notify_observers(:resources_reloaded)
   end
 
   private
