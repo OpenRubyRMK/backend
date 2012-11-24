@@ -88,7 +88,19 @@ class OpenRubyRMK::Backend::Project
 
   # Human-readable description.
   def inspect
-    "#<#{self.class} #{@paths.root} \"#{@config[:name]}\">"
+    "#<#{self.class} #{@paths.root} \"#{full_name}\">"
+  end
+
+  # Short name of the project, i.e. the name of the project
+  # root directory.
+  def short_name
+    @paths.root.basename.to_s
+  end
+
+  # Full name of the project, i.e. the string configured in
+  # the project’s configuration file.
+  def full_name
+    @config[:project][:name]
   end
 
   #Recursively deletes the project directory and invalidates this
