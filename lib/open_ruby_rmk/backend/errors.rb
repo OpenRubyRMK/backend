@@ -13,30 +13,36 @@ module OpenRubyRMK::Backend::Errors
   class OpenRubyRMKBackendError < OpenRubyRMKError
   end
 
-  # Raised when a directory couldn’t be found.
-  class NonexistantDirectory < OpenRubyRMKBackendError
+  # Raised when something expected on the filesystem couldn’t
+  # be found.
+  class NonexistantPath < OpenRubyRMKBackendError
 
     # The directory in question, as a Pathname instance.
     attr_reader :path
 
     # Creates a new exception of this type.
     def initialize(path, msg = nil)
-      super(msg || "The directory '#{path}' couldn’t be found.")
+      super(msg || "The path '#{path}' couldn't be found.")
       @path = Pathname.new(path)
     end
 
   end
 
-  # Raised when a file couldn’t be found.
-  class NonexistantFile < OpenRubyRMKBackendError
-
-    # The path in question, as a Pathname instance.
-    attr_reader :path
+  # Raised when a directory couldn’t be found.
+  class NonexistantDirectory < NonexistantPath
 
     # Creates a new exception of this type.
     def initialize(path, msg = nil)
-      super(msg || "The file '#{path}' couldn't be found.")
-      @path = Pathname.new(path)
+      super(path, msg || "Not a directory: '#{path}'.")
+    end
+
+  end
+
+  # Raised when a file couldn’t be found.
+  class NonexistantFile < NonexistantPath
+
+    def initialize(path, msg = nil)
+      super(path, msg || "Not a file: '#{path}'.")
     end
 
   end
