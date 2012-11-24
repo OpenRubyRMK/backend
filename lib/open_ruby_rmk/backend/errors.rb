@@ -14,22 +14,24 @@ module OpenRubyRMK::Backend::Errors
   end
 
   # Raised when something expected on the filesystem couldn’t
-  # be found.
-  class NonexistantPath < OpenRubyRMKBackendError
+  # be found. Beware, this may also be raised if the target
+  # path’s type is wrong (e.g. a directory instead of a file,
+  # or a socket where a directory should be, etc.).
+  class InvalidPath < OpenRubyRMKBackendError
 
     # The directory in question, as a Pathname instance.
     attr_reader :path
 
     # Creates a new exception of this type.
     def initialize(path, msg = nil)
-      super(msg || "The path '#{path}' couldn't be found.")
+      super(msg || "The path '#{path}' doesn't exist or isn't of the expected type.")
       @path = Pathname.new(path)
     end
 
   end
 
   # Raised when a directory couldn’t be found.
-  class NonexistantDirectory < NonexistantPath
+  class NonexistantDirectory < InvalidPath
 
     # Creates a new exception of this type.
     def initialize(path, msg = nil)
@@ -39,7 +41,7 @@ module OpenRubyRMK::Backend::Errors
   end
 
   # Raised when a file couldn’t be found.
-  class NonexistantFile < NonexistantPath
+  class NonexistantFile < InvalidPath
 
     def initialize(path, msg = nil)
       super(path, msg || "Not a file: '#{path}'.")
