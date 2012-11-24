@@ -66,7 +66,7 @@ class OpenRubyRMK::Backend::Project
   rescue Errno::ENOENT, Errno::EISDIR, Errno::ENOTDIR => e
     # Extract the path from the exception and transform it into a
     # proper error.
-    path = e.message.split("-").drop(1).join
+    path = e.message.split("-").drop(1).join.strip
     raise(OpenRubyRMK::Backend::Errors::InvalidPath.new(path))
   end
 
