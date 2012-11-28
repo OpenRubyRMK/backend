@@ -14,6 +14,24 @@ class ProjectTest < Test::Unit::TestCase
     @tmpdir.rmtree if @tmpdir.directory? # Might be removed from a test
   end
 
+  def generate_resource
+    Dir.mkdir(@tmpdir + "stuff")
+    File.open(@tmpdir + "stuff" + "myfile.txt", "w") do |f|
+      f.puts("Awesome resource")
+    end
+    File.open(@tmpdir + "stuff" + "myfile.txt.yml", "w") do |f|
+      hsh = {
+        "year" => 2000,
+        "license" => "CC-BY",
+        "author" => "Nobody",
+        "extra" => "Nix da!!"
+      }
+      YAML.dump(hsh, f)
+    end
+
+    @resource_path = @tmpdir + "stuff" + "myfile.txt"
+  end
+
   def test_paths
     pr = Project.new(@tmpdir)
     assert_equal(@tmpdir, pr.paths.root)
@@ -39,7 +57,6 @@ class ProjectTest < Test::Unit::TestCase
     assert_equal(Backend.version, pr.config[:open_ruby_rmk][:version])
     assert(pr.config[:project][:name], "Project has no full name!")
     assert_equal("0.0.1", pr.config[:project][:version])
-    assert_equal(@tmpdir + "data" + "resources" + "graphics" + "misc" + "ruby.png", pr.resources.first.path)
   end
 
   def test_loading
@@ -99,6 +116,19 @@ class ProjectTest < Test::Unit::TestCase
     assert_equal(2, pr.root_maps.count)
     pr.remove_root_map(m4)
     assert_equal(2, pr.root_maps.count) # Nothing done
+  end
+
+  def test_resources
+    generate_resource
+
+    pr = Project.new(@tmpdir + "myproject")
+    pr.add_resource(@resource_path, "graphics/misc")
+    assert_file(@tmpdir + "myproject" + "data" + "resources" + "graphics" + "misc" + @resource_path.basename)
+    assert_file(@tmpdir + "myproject" + "data" + "resources" + "graphics" + "misc" + "#{@resource_path.basename}.yml")
+
+    pr.remove_resource("graphics/misc/#{@resource_path.basename}")
+    refute_exists(@tmpdir + "myproject" + "data" + "resources" + "graphics" + "misc" + @resource_path.basename)
+    refute_exists(@tmpdir + "myproject" + "data" + "resources" + "graphics" + "misc" + "#{@resource_path.basename}.yml")
   end
 
 end

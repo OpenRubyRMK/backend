@@ -34,9 +34,6 @@ class OpenRubyRMK::Backend::Project
   # The root maps of a project. Don’t work on this directly,
   # use #add_root_map and #remove_root_map.
   attr_reader :root_maps
-  # All the graphics, music, etc. files available to a project.
-  # An array of Resource objects.
-  attr_reader :resources
 
   #Loads an OpenRubyRMK project from a project directory.
   #==Parameter
@@ -58,8 +55,6 @@ class OpenRubyRMK::Backend::Project
       @paths       = Paths.new(path)
       @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
       @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
-
-      reload_resources!
     end
 
     proj
@@ -82,8 +77,6 @@ class OpenRubyRMK::Backend::Project
     create_skeleton
     @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
     @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file) # Skeleton may (and most likely does) contain maps
-
-    reload_resources!
   end
 
   # Human-readable description.
@@ -152,32 +145,64 @@ class OpenRubyRMK::Backend::Project
     OpenRubyRMK::Backend::MapStorage.save_maps_tree(@paths.maps_dir, @paths.maps_file, *@root_maps)
   end
 
-  # Recursively skims through the resources dir and
-  # updates the list of resources. This is called automatically
-  # when creating/loading a project, so you don’t have to call
-  # it manually in these cases.
+  # Adds a resource to the project.
+  # == Parameters
+  # [path]
+  #   A (preferably absolute) path to the file you want to
+  #   add to the project. The resource information file will
+  #   be determined by appending ".yml" to this.
+  # [target_dir]
+  #   Where you want to copy the resource exactly. This is a
+  #   path relative to the <b>resources/</b> directory of
+  #   the project (intermediate nonexisting directory will
+  #   not be created).
+  # == Raises
+  # Everything that Backend::Resource::new raises.
   # == Events
-  # [resources_reloaded]
-  #   Always fired when this method is called. It receives
-  #   no additional parameters.
-  def reload_resources!
+  # [resource_added]
+  #   Emitted always when this method is called. The callback
+  #   gets the :resource as a Backend::Resource instance passed.
+  # == Return value
+  # An instance of Backend::Resource describing the newly
+  # added resource.
+  # == Remarks
+  # The resource is added immediately, you don’t have to call
+  # #save to get it into the project directory tree.
+  def add_resource(path, target_dir)
+    res = OpenRubyRMK::Backend::Resource.new(path)
     changed
-    @resources = []
+    FileUtils.cp(res.path, @paths.resources_dir + target_dir)
+    FileUtils.cp(res.info_file, @paths.resources_dir + target_dir)
+    notify_observers(:resource_added, :resource => res)
+    res
+  end
 
-    @paths.resources_dir.find do |path|
-      next if path.directory? or path.extname == ".yml" # Don’t load the info files as resources
-
-      if path.basename.to_s == "DUMMY" # We’re using these in development as placeholders
-        warn("Warning: Ignoring dummy resource: #{path}")
-      else
-        @resources << OpenRubyRMK::Backend::Resource.new(path)
-      end
-    end
-
-    # This can’t be modified for safety reasons.
-    @resources.freeze
-
-    notify_observers(:resources_reloaded)
+  # *Permanently*, *irrevocabily*, and *immediately* deletes a
+  # resource from the project. The corresponding resource
+  # information file is also deleted.
+  # == Parameter
+  # [path]
+  #   The path to the resource to delete, relative to the
+  #   project <b>resources/</b> directory. The resource information
+  #   file’s path will be determined by simply appending ".yml"
+  #   to this.
+  # == Events
+  # [resource_deleted]
+  #   Emmitted always when this method is called; the callback
+  #   gets passed the deleted :resource as a Backend::Resource
+  #   instance (but note Resource#valid? will return +false+ as
+  #   the resource doesn’t exist on disk anymore).
+  # == Return value
+  # A Backend::Resource object describing the deleted resource.
+  # Again, Resource#valid? will return +false+ for that resource
+  # for the above reasons.
+  def remove_resource(path)
+    res = OpenRubyRMK::Backend::Resource.new(@paths.resources_dir + path)
+    changed
+    File.delete(res.path)
+    File.delete(res.info_file)
+    notify_observers(:resource_deleted, :resource => res) # res.valid? will return false
+    res
   end
 
   private

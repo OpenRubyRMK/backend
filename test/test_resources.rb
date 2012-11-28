@@ -1,6 +1,7 @@
 require_relative "helpers"
 
 class ResourceTest < Test::Unit::TestCase
+  include FileUtils
   include OpenRubyRMK::Backend
   include OpenRubyRMK::Backend::Fixtures
   include OpenRubyRMK::Backend::AdditionalAssertions
@@ -26,6 +27,32 @@ class ResourceTest < Test::Unit::TestCase
     assert_frozen(res.info_file)
     assert_frozen(res.copyright)
     assert_raises(RuntimeError){res.copyright.author = "Me"}
+  end
+
+  def test_validness
+    Dir.mktmpdir do |tmpdir|
+      tmpdir = Pathname.new(tmpdir)
+      cp fixture("resources/ruby.png"), tmpdir
+      cp fixture("resources/ruby.png.yml"), tmpdir
+
+      res = Resource.new(tmpdir + "ruby.png")
+      assert(res.valid?, "Didn't recognise a valid resource as such")
+
+      rm res.path
+      refute(res.valid?, "Found a resource without main file valid")
+    end
+
+    Dir.mktmpdir do |tmpdir|
+      tmpdir = Pathname.new(tmpdir)
+      cp fixture("resources/ruby.png"), tmpdir
+      cp fixture("resources/ruby.png.yml"), tmpdir
+      res = Resource.new(tmpdir + "ruby.png")
+
+      rm res.info_file
+      refute(res.valid?, "Found a resource without resource information file valid")
+      rm res.path
+      refute(res.valid?, "Found a resource with neither resource nor informatino file valid")
+    end
   end
 
 end

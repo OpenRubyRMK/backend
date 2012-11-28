@@ -83,6 +83,14 @@ class OpenRubyRMK::Backend::Resource
     "#<#{self.class} #{@path.basename} (Copyright (C) #{@copyright.year} #{@copyright.author})>"
   end
 
+  # Checks if this resource actually refers to something on
+  # the filesystem. For a resource to be considered valid,
+  # both the path to the main resource file and the resource
+  # information file must exist as valid files.
+  def valid?
+    @path.file? && @info_file.file?
+  end
+
   # True if this is considered a graphical resource.
   def graphic?
     GRAPHIC_RESOURCE_EXTS.include?(@path.extname)
