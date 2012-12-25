@@ -15,7 +15,7 @@ class OpenRubyRMK::Backend::Project
   Paths = Struct.new(:root, :rmk_file, :data_dir, :resources_dir, :maps_dir, :maps_file, :graphics_dir, :tilesets_dir, :scripts_dir) do
     def initialize(root) # :nodoc:
       self.root          = Pathname.new(root).expand_path
-      self.rmk_file      = self.root     + "bin" + "#{self.root.basename}.rmk"
+      self.rmk_file      = self.root     + "project.rmk"
       self.data_dir      = self.root     + "data"
       self.resources_dir = data_dir      + "resources"
       self.graphics_dir  = resources_dir + "graphics"
@@ -35,24 +35,25 @@ class OpenRubyRMK::Backend::Project
   # use #add_root_map and #remove_root_map.
   attr_reader :root_maps
 
-  #Loads an OpenRubyRMK project from a project directory.
-  #==Parameter
-  #[path] The path to the project directory, i.e. the directory
-  #       containing the bin/ subdirectory with the main RMK file.
-  #==Raises
-  #[NonexistantDirectory]
-  #  +path+ doesn’t exist.
-  #[InvalidPath]
-  #  The directory structure below +path+ is damaged somehow,
-  #  some file or directory isn’t where it was expected to be.
-  #==Return value
-  #An instance of this class representing the project.
-  def self.load_dir(path)
-    raise(OpenRubyRMK::Backend::Errors::NonexistantDirectory.new(path)) unless File.directory?(path)
+  # Loads an OpenRubyRMK project from a project file and it’s
+  # associated directory.
+  # ==Parameter
+  # [path] The path to the project file, i.e. the file
+  #        ending in .rmk.
+  # ==Raises
+  # [NonexistantFile]
+  #   +path+ doesn’t exist.
+  # [InvalidPath]
+  #   The directory structure below +path+ is damaged somehow,
+  #   some file or directory isn’t where it was expected to be.
+  # ==Return value
+  # An instance of this class representing the project.
+  def self.load_project_file(path)
+    raise(OpenRubyRMK::Backend::Errors::NonexistantFile.new(path)) unless File.file?(path)
 
     proj = allocate
     proj.instance_eval do
-      @paths       = Paths.new(path)
+      @paths       = Paths.new(path.dirname)
       @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
       @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
     end
@@ -65,13 +66,15 @@ class OpenRubyRMK::Backend::Project
     raise(OpenRubyRMK::Backend::Errors::InvalidPath.new(path))
   end
 
-  #Creates a new project directory at the given path. This method
-  #will copy the files from the skeleton archive (see Paths::SKELETON_FILE)
-  #into that directory and then load the resulting project.
-  #==Parameter
-  #Path where to create a new project directory.
-  #==Return value
-  #A new instance of this class representing the created project.
+  # Creates a new project directory at the given path. This method
+  # will copy the files from the skeleton archive (see Paths::SKELETON_FILE)
+  # into that directory and then load the resulting project.
+  # ==Parameter
+  # Path where to create a new project directory. Note this is *not*
+  # the full path to the RMK file (which will then in turn be created),
+  # but to the toplevel project directory.
+  # ==Return value
+  # A new instance of this class representing the created project.
   def initialize(path)
     @paths       = Paths.new(path)
     create_skeleton
@@ -210,8 +213,7 @@ class OpenRubyRMK::Backend::Project
   #Extracts the skeleton archive into the project directory
   #and renames the name_of_proj.rmk file to the project’s name.
   def create_skeleton
-    FileUtils.cp_r "#{OpenRubyRMK::Backend::DATA_DIR}/skeleton/.", @paths.root
-    File.rename(@paths.root.join("bin", "name_of_proj.rmk"), @paths.rmk_file)
+    FileUtils.cp_r "#{OpenRubyRMK::Backend::DATA_DIR}/skeleton/.", @paths.root # Note trailing . for copying directory contents
   end
 
 end

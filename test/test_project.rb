@@ -35,7 +35,7 @@ class ProjectTest < Test::Unit::TestCase
   def test_paths
     pr = Project.new(@tmpdir)
     assert_equal(@tmpdir, pr.paths.root)
-    assert_equal(@tmpdir + "bin" + "#{@tmpdir.basename}.rmk", pr.paths.rmk_file)
+    assert_equal(@tmpdir + "project.rmk", pr.paths.rmk_file)
     assert_equal(@tmpdir + "data", pr.paths.data_dir)
     assert_equal(@tmpdir + "data" + "maps", pr.paths.maps_dir)
     assert_equal(@tmpdir + "data" + "maps" + "maps.xml", pr.paths.maps_file)
@@ -47,7 +47,7 @@ class ProjectTest < Test::Unit::TestCase
 
   def test_creation
     pr = Project.new(@tmpdir)
-    assert_file(@tmpdir + "bin" + "#{@tmpdir.basename}.rmk")
+    assert_file(@tmpdir + "project.rmk")
     assert_dir(@tmpdir + "data")
     assert_dir(@tmpdir + "data" + "maps")
     assert_file(@tmpdir + "data" + "maps" + "maps.xml")
@@ -65,7 +65,7 @@ class ProjectTest < Test::Unit::TestCase
     pr.root_maps.last[:name] = "foo-map"
     pr.save
 
-    pr = Project.load_dir(@tmpdir)
+    pr = Project.load_project_file(@tmpdir + "project.rmk")
     assert_equal(@tmpdir, pr.paths.root)
     assert_equal(2, pr.root_maps.count)
     assert_equal("foo-map", pr.root_maps.last[:name])
@@ -92,7 +92,7 @@ class ProjectTest < Test::Unit::TestCase
     pr = Project.new(@tmpdir)
     pr.config["foo"] = "bar"
     pr.save
-    assert_equal("bar", YAML.load_file(@tmpdir.join("bin", "#{@tmpdir.basename}.rmk"))["foo"])
+    assert_equal("bar", YAML.load_file(@tmpdir + "project.rmk")["foo"])
   end
 
   def test_root_maps
