@@ -1,3 +1,0 @@
-[submodule "data/skeleton/lib"]
-	path = data/skeleton/lib
-	url = git://github.com/OpenRubyRMK/game-engine.git
