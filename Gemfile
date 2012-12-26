@@ -4,8 +4,6 @@ source "https://rubygems.org"
 gem "ruby-tmx", :git => "git://github.com/Quintus/tmx-ruby.git"
 gem "nokogiri"
 
-gem "openrubyrmk-engine", :git => "git://github.com/OpenRubyRMK/game-engine.git"
-
 group :development do
   gem "paint"
   gem "turn"

@@ -1,4 +1,4 @@
 # -*- ruby -*-
 gem "gosu"
 gem "ruby-tmx"
-gem "openrubyrmk-engine"
+gem "openrubyrmk-engine", :git => "git://github.com/OpenRubyRMK/game-engine.git"
