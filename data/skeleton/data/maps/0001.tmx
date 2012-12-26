@@ -3,9 +3,7 @@
  <properties>
   <property name="name" value="Map_1"/>
  </properties>
- <tileset firstgid="1" name="gimp" tilewidth="32" tileheight="32">
-  <image source="../resources/graphics/tilesets/gimp.png" width="256" height="576"/>
- </tileset>
+ <tileset firstgid="1" source="../tilesets/gimp.tsx"/>
  <layer name="Ground" width="20" height="15">
   <data encoding="base64" compression="zlib">
    eJxjZmBgYB7Fo3gUj+IhgAFJkAOF
