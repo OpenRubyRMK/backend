@@ -1,0 +1,4 @@
+# -*- ruby -*-
+gem "gosu"
+gem "ruby-tmx"
+gem "openrubyrmk-engine"
