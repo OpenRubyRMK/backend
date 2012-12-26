@@ -1,4 +1,12 @@
 GIT
+  remote: git://github.com/OpenRubyRMK/game-engine.git
+  revision: 3ff67f3e20b236306c94875801bb41d189d412d6
+  specs:
+    openrubyrmk-engine (0.0.1.dev)
+      gosu
+      ruby-tmx
+
+GIT
   remote: git://github.com/Quintus/tmx-ruby.git
   revision: f3548929c124ad0814af3d4717c9c3e5342cbb9d
   specs:
@@ -12,6 +20,7 @@ GEM
     emerald (0.0.1.alpha4)
       rdoc (>= 3.12)
       sass (>= 3.2.0)
+    gosu (0.7.45)
     json (1.7.5)
     nokogiri (1.5.5)
     paint (0.8.5)
@@ -28,6 +37,7 @@ PLATFORMS
 DEPENDENCIES
   emerald
   nokogiri
+  openrubyrmk-engine!
   paint
   rake
   rdoc
