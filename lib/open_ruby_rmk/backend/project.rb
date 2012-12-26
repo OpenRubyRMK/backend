@@ -148,6 +148,14 @@ class OpenRubyRMK::Backend::Project
     OpenRubyRMK::Backend::MapStorage.save_maps_tree(@paths.maps_dir, @paths.maps_file, *@root_maps)
   end
 
+  # Packages everything up into a distributable package.
+  # Depending on the platform, this may be a tarball, an
+  # OCRA executable, or something entirely different.
+  def package(path, platform)
+    path = Pathname.new(path).expand_path
+    raise(NotImplementedError, "Packaging is not yet implemented!")
+  end
+
   # Adds a resource to the project.
   # == Parameters
   # [path]
