@@ -23,6 +23,13 @@ class MapTest < Test::Unit::TestCase
     assert_empty(@map.children)
     assert_nil(@map.parent)
     assert("Map_0001", @map[:name])
+    assert(@map.tmx_map, "Didn't assign a TMX map to a new map")
+    assert_equal(Map::DEFAULT_MAP_WIDTH, @map.tmx_map.width)
+    assert_equal(Map::DEFAULT_MAP_HEIGHT, @map.tmx_map.height)
+    assert_equal(Map::DEFAULT_TILE_EDGE, @map.tmx_map.tilewidth)
+    assert_equal(Map::DEFAULT_TILE_EDGE, @map.tmx_map.tileheight)
+    assert_equal(1, @map.tmx_map.layers.count)
+    assert_equal(Map::DEFAULT_MAP_WIDTH * Map::DEFAULT_MAP_HEIGHT, @map.tmx_map.layers.last.instance_variable_get(:@data).length)
     assert(@map.root?, "Didn't reconise a map without a parent as a root map.")
   end
 

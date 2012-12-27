@@ -44,6 +44,13 @@
 class OpenRubyRMK::Backend::Map
   include OpenRubyRMK::Backend::Eventable
 
+  # Number of tile columns to use for new maps.
+  DEFAULT_MAP_WIDTH = 20
+  # Number of tile rows to use for new maps.
+  DEFAULT_MAP_HEIGHT = 15
+  # Number of pixels to use for the edges of a tile.
+  DEFAULT_TILE_EDGE = 32
+
   # The ID of the map. Unique within a project.
   attr_reader :id
 
@@ -83,6 +90,10 @@ class OpenRubyRMK::Backend::Map
   # Create a new map.
   # == Parameters
   # [id] The ID to assign to this map.
+  # == Remarks
+  # The map is created with the default map size
+  # (see DEFAULT_MAP_WIDTH and DEFAULT_MAP_HEIGHT)
+  # and one empty tile layer.
   def initialize(id)
     @id       = Integer(id)
     @tmx_map  = TiledTmx::Map.new
@@ -90,12 +101,16 @@ class OpenRubyRMK::Backend::Map
     @parent   = nil
 
     # Set some default map values
-    @tmx_map.width       = 20
-    @tmx_map.height      = 15
+    @tmx_map.width       = DEFAULT_MAP_WIDTH
+    @tmx_map.height      = DEFAULT_MAP_HEIGHT
     @tmx_map.orientation = :orthogonal
-    @tmx_map.tilewidth   = 32
-    @tmx_map.tileheight  = 32
-    self[:name]          = "Map_#@id"
+    @tmx_map.tilewidth   = DEFAULT_TILE_EDGE
+    @tmx_map.tileheight  = DEFAULT_TILE_EDGE
+
+    @tmx_map.layers << TiledTmx::TileLayer.new
+    @tmx_map.layers.last.name = "Ground"
+    0.upto(DEFAULT_MAP_WIDTH * DEFAULT_MAP_HEIGHT - 1){|i| @tmx_map.layers.last[i] = 0}
+    self[:name] = "Map_#@id"
   end
 
   # Read extra properties from the map, e.g.
