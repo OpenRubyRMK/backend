@@ -285,7 +285,7 @@ class OpenRubyRMK::Backend::Map
   # calls this method if you worried about that).
   def save(maps_dir)
     target = File.join(maps_dir, self.class.format_filename(@id))
-    File.open(target, "w"){|f| f.write(@tmx_map.to_xml)}
+    File.open(target, "w"){|f| f.write(@tmx_map.to_xml, target)}
   end
 
 end
