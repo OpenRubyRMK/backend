@@ -3,6 +3,7 @@ require_relative "helpers"
 
 class MapTest < Test::Unit::TestCase
   include OpenRubyRMK::Backend
+  include OpenRubyRMK::Backend::Fixtures
   include OpenRubyRMK::Backend::AdditionalAssertions
 
   def setup
@@ -127,6 +128,32 @@ class MapTest < Test::Unit::TestCase
     assert_equal(child2_map, child_map.parent)
     assert_equal(child_map, child2_map.children.first)
     assert_equal(root_map, child_map.parent.parent)
+  end
+
+  def test_adding_tilesets_and_gids
+    tileset = TiledTmx::Tileset.load_xml(fixture("resources/gimp.tsx")) # 144 tiles
+    event_emitted = false
+
+    assert_equal(1, @map.next_gid)
+    @map.observe(:tileset_added) do |event, sender, hsh|
+      unless event_emitted # Only for the first adding, see below
+        assert_equal(tileset, hsh[:tileset])
+        assert_equal(1, hsh[:gid])
+      end
+
+      event_emitted = true
+    end
+    @map.add_tileset(tileset)
+
+    assert(event_emitted, "No tileset addition event was issued")
+    assert_equal(145, @map.next_gid) # 144 tiles
+    assert_equal(1, @map.tmx_map.tilesets.count)
+    assert_equal(1, @map.tmx_map.tilesets.keys.first)
+    assert_equal(tileset, @map.tmx_map.tilesets.values.first)
+
+    @map.add_tileset(tileset)
+    assert_equal(289, @map.next_gid)
+    assert_equal(145, @map.tmx_map.tilesets.keys.last) # Ordered hashes
   end
 
   def test_saving

@@ -256,6 +256,51 @@ class OpenRubyRMK::Backend::Map
     false
   end
 
+  # Adds a tileset to this map.
+  # == Parameters
+  # [tileset]
+  #   A TiledTmx::Tileset instance to add to the
+  #   underlying TiledTmx::Map instance.
+  # [gid (<tt>next_gid()</tt>)]
+  #   The GID (global tile ID) for the tileset
+  #   in this map. If +nil+, it will be automatically
+  #   set to the first free GID. Be careful when
+  #   setting this manually, you may screw up an
+  #   entire map by shifting GIDs from a tileset
+  #   over to another one with this.
+  # == Event
+  # [tileset_added]
+  #   Always emitted when calling this method. The
+  #   callback receives a :tileset parameter with
+  #   the given +tileset+ object, and a :gid parameter
+  #   with the GID used for this tileset on this map.
+  # == Remarks
+  # Question: Why can’t I add the tileset directly
+  # to #tmx_map?
+  #
+  # Answer: No +tileset_added+ event would be emitted,
+  # possible breaking UIs.
+  def add_tileset(tileset, gid = next_gid)
+    changed
+    @tmx_map.tilesets[gid] = tileset
+    notify_observers :tileset_added, :gid => gid, :tileset => tileset
+  end
+
+  # Returns the first free GID for this map, i.e. the
+  # first GID that does not correspond to a tileset and
+  # that is not 0 (which represents an empty tile).
+  def next_gid
+    if @tmx_map.tilesets.empty?
+      1 # 0 is the GID for empty tiles
+    else
+      # Get the highest assigned GID and add the GIDs
+      # for all the corresponding tileset’s tiles. The
+      # next GID after this is the last free GID.
+      last_start_gid = @tmx_map.tilesets.keys.max
+      last_start_gid + @tmx_map.tilesets[last_start_gid].num_tiles
+    end
+  end
+
   #call-seq:
   #  traverse(include_self = false){|map| ...}
   #
