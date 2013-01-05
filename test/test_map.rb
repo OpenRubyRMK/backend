@@ -30,7 +30,8 @@ class MapTest < Test::Unit::TestCase
     assert_equal(Map::DEFAULT_TILE_EDGE, @map.tmx_map.tilewidth)
     assert_equal(Map::DEFAULT_TILE_EDGE, @map.tmx_map.tileheight)
     assert_equal(1, @map.tmx_map.layers.count)
-    assert_equal(Map::DEFAULT_MAP_WIDTH * Map::DEFAULT_MAP_HEIGHT, @map.tmx_map.layers.last.instance_variable_get(:@data).length)
+    assert_equal(Map::DEFAULT_MAP_WIDTH * Map::DEFAULT_MAP_HEIGHT,
+                 @map.tmx_map.get_layer(-1).map.width * @map.tmx_map.get_layer(-1).map.height)
     assert(@map.root?, "Didn't reconise a map without a parent as a root map.")
   end
 
@@ -134,7 +135,7 @@ class MapTest < Test::Unit::TestCase
     tileset = TiledTmx::Tileset.load_xml(fixture("resources/gimp.tsx")) # 144 tiles
     event_emitted = false
 
-    assert_equal(1, @map.next_gid)
+    assert_equal(1, @map.tmx_map.next_first_gid)
     @map.observe(:tileset_added) do |event, sender, hsh|
       unless event_emitted # Only for the first adding, see below
         assert_equal(tileset, hsh[:tileset])
@@ -146,14 +147,13 @@ class MapTest < Test::Unit::TestCase
     @map.add_tileset(tileset)
 
     assert(event_emitted, "No tileset addition event was issued")
-    assert_equal(145, @map.next_gid) # 144 tiles
+    assert_equal(145, @map.tmx_map.next_first_gid) # 144 tiles
     assert_equal(1, @map.tmx_map.tilesets.count)
-    assert_equal(1, @map.tmx_map.tilesets.keys.first)
-    assert_equal(tileset, @map.tmx_map.tilesets.values.first)
+    assert_equal(1, @map.tmx_map.each_tileset_key.first)
+    assert_equal(tileset, @map.tmx_map.each_tileset.first[1])
 
     @map.add_tileset(tileset)
-    assert_equal(289, @map.next_gid)
-    assert_equal(145, @map.tmx_map.tilesets.keys.last) # Ordered hashes
+    assert_equal(289, @map.tmx_map.next_first_gid)
   end
 
   def test_saving

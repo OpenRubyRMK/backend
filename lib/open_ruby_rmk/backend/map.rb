@@ -107,9 +107,7 @@ class OpenRubyRMK::Backend::Map
     @tmx_map.tilewidth   = DEFAULT_TILE_EDGE
     @tmx_map.tileheight  = DEFAULT_TILE_EDGE
 
-    @tmx_map.layers << TiledTmx::TileLayer.new
-    @tmx_map.layers.last.name = "Ground"
-    0.upto(DEFAULT_MAP_WIDTH * DEFAULT_MAP_HEIGHT - 1){|i| @tmx_map.layers.last[i] = 0}
+    @tmx_map.add_layer(:layer, :name => "Ground") # FIXME: When ruby-tmx supports :tile, use that for clarity
     self[:name] = "Map_#@id"
   end
 
@@ -261,7 +259,7 @@ class OpenRubyRMK::Backend::Map
   # [tileset]
   #   A TiledTmx::Tileset instance to add to the
   #   underlying TiledTmx::Map instance.
-  # [gid (<tt>next_gid()</tt>)]
+  # [gid (nil)]
   #   The GID (global tile ID) for the tileset
   #   in this map. If +nil+, it will be automatically
   #   set to the first free GID. Be careful when
@@ -280,25 +278,17 @@ class OpenRubyRMK::Backend::Map
   #
   # Answer: No +tileset_added+ event would be emitted,
   # possible breaking UIs.
-  def add_tileset(tileset, gid = next_gid)
+  def add_tileset(tileset, gid = nil)
     changed
-    @tmx_map.tilesets[gid] = tileset
-    notify_observers :tileset_added, :gid => gid, :tileset => tileset
-  end
 
-  # Returns the first free GID for this map, i.e. the
-  # first GID that does not correspond to a tileset and
-  # that is not 0 (which represents an empty tile).
-  def next_gid
-    if @tmx_map.tilesets.empty?
-      1 # 0 is the GID for empty tiles
+    if gid
+      @tmx_map.add_tileset(tileset, gid)
     else
-      # Get the highest assigned GID and add the GIDs
-      # for all the corresponding tileset’s tiles. The
-      # next GID after this is the last free GID.
-      last_start_gid = @tmx_map.tilesets.keys.max
-      last_start_gid + @tmx_map.tilesets[last_start_gid].num_tiles
+      gid = @tmx_map.next_first_gid # FIXME: TiledTmx::Map#add_tileset should return the GID in a future version of ruby-tmx when using an optional parameter
+      @tmx_map.add_tileset(tileset, gid)
     end
+
+    notify_observers :tileset_added, :gid => gid, :tileset => tileset
   end
 
   #call-seq:
