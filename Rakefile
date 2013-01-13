@@ -35,4 +35,4 @@ RDoc::Task.new do |rt|
 end
 
 load "openrubyrmk-backend.gemspec"
-Gem::PackageTask.new(GEMSPEC).define
+Gem::PackageTask.new(ORR_BACKEND_GEMSPEC).define

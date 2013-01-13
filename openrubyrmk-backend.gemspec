@@ -1,5 +1,5 @@
 # -*- ruby -*-
-GEMSPEC = Gem::Specification.new do |spec|
+ORR_BACKEND_GEMSPEC = Gem::Specification.new do |spec|
 
   # Project information
   spec.name        = "openrubyrmk-backend"
