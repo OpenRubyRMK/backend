@@ -32,6 +32,8 @@ class MapTest < Test::Unit::TestCase
     assert_equal(1, @map.tmx_map.layers.count)
     assert_equal(Map::DEFAULT_MAP_WIDTH * Map::DEFAULT_MAP_HEIGHT,
                  @map.tmx_map.get_layer(-1).map.width * @map.tmx_map.get_layer(-1).map.height)
+    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.tmx_map.get_layer(-1).compression)
+    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.tmx_map.get_layer(-1).encoding)
     assert(@map.root?, "Didn't reconise a map without a parent as a root map.")
   end
 

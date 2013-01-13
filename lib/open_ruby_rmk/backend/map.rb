@@ -50,6 +50,10 @@ class OpenRubyRMK::Backend::Map
   DEFAULT_MAP_HEIGHT = 15
   # Number of pixels to use for the edges of a tile.
   DEFAULT_TILE_EDGE = 32
+  # The compression to instruct ruby-tmx to use for layer tiles.
+  DEFAULT_LAYER_COMPRESSION = "zlib"
+  # The encoding used for the compressed layer tiles, for ruby-tmx.
+  DEFAULT_LAYER_ENCODING    = "base64"
 
   # The ID of the map. Unique within a project.
   attr_reader :id
@@ -107,7 +111,10 @@ class OpenRubyRMK::Backend::Map
     @tmx_map.tilewidth   = DEFAULT_TILE_EDGE
     @tmx_map.tileheight  = DEFAULT_TILE_EDGE
 
-    @tmx_map.add_layer(:layer, :name => "Ground") # FIXME: When ruby-tmx supports :tile, use that for clarity
+    layer             = @tmx_map.add_layer(:layer, :name => "Ground") # FIXME: When ruby-tmx supports :tile, use that for clarity
+    layer.compression = DEFAULT_LAYER_COMPRESSION
+    layer.encoding    = DEFAULT_LAYER_ENCODING
+
     self[:name] = "Map_#@id"
   end
 
