@@ -158,6 +158,29 @@ class MapTest < Test::Unit::TestCase
     assert_equal(289, @map.tmx_map.next_first_gid)
   end
 
+  def test_adding_layers
+    assert_equal(1, @map.tmx_map.layers.count)
+
+    event_fired = false
+    @map.observe(:layer_added) do |event, sender, info|
+      event_fired = true
+      assert_kind_of(TiledTmx::Layer, info[:layer])
+    end
+
+    @map.add_layer(:tile, :name => "A new layer")
+    assert(event_fired, "No layer addition event was issued")
+    assert_equal(2, @map.tmx_map.layers.count)
+    assert_equal("A new layer", @map.tmx_map.get_layer(-1).name)
+
+    event_fired = false
+    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "Another layer")
+    @map.add_layer(layer)
+    assert(event_fired, "No layer addition event was issued")
+    assert_equal(3, @map.tmx_map.layers.count)
+    assert_equal("Another layer", @map.tmx_map.get_layer(-1).name)
+    assert_equal(layer, @map.tmx_map.get_layer(-1))
+  end
+
   def test_saving
     Dir.mktmpdir do |tmpdir|
       tmpdir = Pathname.new(tmpdir)

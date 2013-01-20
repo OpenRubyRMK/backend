@@ -298,6 +298,31 @@ class OpenRubyRMK::Backend::Map
     notify_observers :tileset_added, :gid => gid, :tileset => tileset
   end
 
+  # Adds a layer to this map.
+  # == Parameters
+  # [*args]
+  #   Passed through to TiledTmx::Map#add_layer.
+  #   Usually either a TiledTmx::Layer subclass instance or
+  #   parameters to create one, like this:
+  #     map.add_layer(:tile, :name => "Ground)
+  # == Events
+  # [layer_added]
+  #   Always emitted when this method is called. The callback
+  #   receives a :layer argument with a TiledTmx::Layer subclass
+  #   instance as an attribute.
+  # == Remarks
+  # Question: Why can’t I add my layers directly to #tmx_map?
+  #
+  # Answer: Because this wouldn’t emit the :layer_added event,
+  # not notifying listeners on this map and probably leading
+  # to obscure errors.
+  def add_layer(*args)
+    changed
+    layer = @tmx_map.add_layer(*args)
+    notify_observers :layer_added, :layer => layer
+    layer
+  end
+
   #call-seq:
   #  traverse(include_self = false){|map| ...}
   #
