@@ -318,7 +318,11 @@ class OpenRubyRMK::Backend::Map
   # to obscure errors.
   def add_layer(*args)
     changed
+
     layer = @tmx_map.add_layer(*args)
+    layer.compression ||= DEFAULT_LAYER_COMPRESSION
+    layer.encoding    ||= DEFAULT_LAYER_ENCODING
+
     notify_observers :layer_added, :layer => layer
     layer
   end

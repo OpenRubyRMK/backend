@@ -171,6 +171,8 @@ class MapTest < Test::Unit::TestCase
     assert(event_fired, "No layer addition event was issued")
     assert_equal(2, @map.tmx_map.layers.count)
     assert_equal("A new layer", @map.tmx_map.get_layer(-1).name)
+    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.tmx_map.get_layer(-1).compression)
+    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.tmx_map.get_layer(-1).encoding)
 
     event_fired = false
     layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "Another layer")
@@ -178,7 +180,32 @@ class MapTest < Test::Unit::TestCase
     assert(event_fired, "No layer addition event was issued")
     assert_equal(3, @map.tmx_map.layers.count)
     assert_equal("Another layer", @map.tmx_map.get_layer(-1).name)
+    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.tmx_map.get_layer(-1).compression)
+    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.tmx_map.get_layer(-1).encoding)
     assert_equal(layer, @map.tmx_map.get_layer(-1))
+
+    event_fired = false
+    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "A layer with custom compression")
+    layer.compression = "gzip"
+    @map.add_layer(layer)
+    assert(event_fired, "No layer addition event was issued")
+    assert_equal("gzip", @map.tmx_map.get_layer(-1).compression)
+
+    event_fired = false
+    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "A layer with custom encoding")
+    layer.encoding = "csv"
+    @map.add_layer(layer)
+    assert(event_fired, "No layer addition event was issued")
+    assert_equal("csv", @map.tmx_map.get_layer(-1).encoding)
+
+    event_fired = false
+    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "A layer with custom compression and encoding")
+    layer.compression = "gzip"
+    layer.encoding = "csv"
+    @map.add_layer(layer)
+    assert(event_fired, "No layer addition event was issued")
+    assert_equal("gzip", @map.tmx_map.get_layer(-1).compression)
+    assert_equal("csv", @map.tmx_map.get_layer(-1).encoding)
   end
 
   def test_saving
