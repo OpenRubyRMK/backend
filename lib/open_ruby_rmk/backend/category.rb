@@ -21,6 +21,10 @@
 #  # Create the new category
 #  items = Category.new("items")
 #
+#  # Define the attributes allowed in this category
+#  items.add_attribute(:name)
+#  items.add_attribute(:type)
+#
 #  # Add one entry to the items category
 #  item1 = Category::Entry.new
 #  item1[:name] = "Hot thing"
@@ -34,10 +38,9 @@
 #  items.entries << item2
 #
 #  # Add another item using hash
-#  items << {:name => "Dirty thing", :type => "earth" }
+#  items << {:name => "Dirty thing", :type => "earth"}
 #
 #  # Attributes used in this category
-#  # TODO: Enforce the same attributes for every entry
 #  p items.attributes #=> ["name", "type"]
 #
 #  # Save it out to disk
@@ -174,7 +177,7 @@ class OpenRubyRMK::Backend::Category
   end
 
   #All attribute names allowed for entries in this
-  #category.
+  #category. This is an array of strings.
   attr_reader :allowed_attributes
   #All Entry instances associated with this category.
   attr_reader :entries
@@ -256,7 +259,7 @@ class OpenRubyRMK::Backend::Category
   #   If your entry contains an attribute that is not
   #   allowed in this category.
   def add_entry(entry)
-    entry = Entry.new(entry) unless entry.is_a?(Entry) 
+    entry = Entry.new(entry) unless entry.is_a?(Entry)
     entry.category = self
     check_attributes!(entry)
     @entries.push(entry)
