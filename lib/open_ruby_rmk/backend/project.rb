@@ -55,7 +55,7 @@ class OpenRubyRMK::Backend::Project
 
     proj = allocate
     proj.instance_eval do
-      @paths       = Paths.new(path.dirname)
+      @paths       = Paths.new(File.dirname(path))
       @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
       @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
     end
