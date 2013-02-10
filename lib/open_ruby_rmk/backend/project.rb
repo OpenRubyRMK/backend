@@ -36,6 +36,9 @@ class OpenRubyRMK::Backend::Project
   # The root maps of a project. Don’t work on this directly,
   # use #add_root_map and #remove_root_map.
   attr_reader :root_maps
+  # The categories of a project. Don’t work on this directly,
+  # use #add_category and #remove_category.
+  attr_reader :categories
 
   # Loads an OpenRubyRMK project from a project file and it’s
   # associated directory.
@@ -82,6 +85,7 @@ class OpenRubyRMK::Backend::Project
     create_skeleton
     @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
     @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file) # Skeleton may (and most likely does) contain maps
+    @categories  = []
   end
 
   # Human-readable description.
@@ -142,6 +146,20 @@ class OpenRubyRMK::Backend::Project
     changed
     @root_maps.delete(map)
     notify_observers(:root_map_removed, :map => map)
+  end
+
+  def add_category(cat)
+    changed
+    @categories << cat
+    notify_obervers(:category_added, :category => cat)
+  end
+
+  def remove_category(cat)
+    return unless @categories.include?(cat)
+
+    changed
+    @categories.delete(cat)
+    notify_observers(:category_removed, :category => cat)
   end
 
   # Saves all the project’s pecularities out to disk.
