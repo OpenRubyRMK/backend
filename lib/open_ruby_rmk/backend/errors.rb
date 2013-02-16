@@ -49,6 +49,26 @@ module OpenRubyRMK::Backend::Errors
 
   end
 
+  # Something failed to parse.
+  class ParseError < OpenRubyRMKBackendError
+
+    # The path to the errorneous file. May be +nil+ if no file
+    # is applicable.
+    attr_reader :path
+    # The faulty line, if applicable and determinable. +nil+ Otherwise.
+    attr_reader :line
+
+    # Creates a new exception of this type. The message is mandatory
+    # and will be prefixed with "Parsing error: ".
+    def initialize(path, line, message)
+      super("Parsing error: #{message}")
+
+      @path = path
+      @line = line
+    end
+
+  end
+
   # Raised when multiple maps having the same ID are
   # detected.
   class DuplicateMapID < OpenRubyRMKBackendError
@@ -60,6 +80,26 @@ module OpenRubyRMK::Backend::Errors
     def initialize(map_id, msg = nil)
       super(msg || "Duplicate map ID #{map_id}!")
       @map_id = map_id
+    end
+
+  end
+
+  # Raised when you try to define an attribute multiple times
+  # on a category.
+  class DuplicateAttribute < OpenRubyRMKBackendError
+
+    # The name of the faulty attribute.
+    attr_reader :name
+
+    # Creates a new exception of this class.
+    # == Parameters
+    # [name]
+    #   The name of the duplicate attribute.
+    # [msg (nil)]
+    #   A non-default error message.
+    def initialize(name, msg = nil)
+      super(msg || "The attribute `#{name}' already exists.")
+      @name = name
     end
 
   end
