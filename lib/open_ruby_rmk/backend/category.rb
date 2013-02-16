@@ -88,7 +88,7 @@ class OpenRubyRMK::Backend::Category
   ATTRIBUTE_TYPE_CONVERSIONS = {
     :number => lambda{|str| str.to_i},
     :float  => lambda{|str| str.to_f},
-    :symbol => lambda{|str| str.to_sym},
+    :ident  => lambda{|str| str.to_sym},
     :string => lambda{|str| str} # No conversion at all
   }
 
@@ -130,7 +130,7 @@ class OpenRubyRMK::Backend::Category
     #==Return value
     #The new instance.
     def initialize(hsh = {})
-      @attributes = Hash.new{|h, k| h[k] = ""}
+      @attributes = {}
       @category   = nil
 
       hsh.each {|k,v| self[k] = v}
@@ -202,11 +202,11 @@ class OpenRubyRMK::Backend::Category
 
     # See accessor docs.
     def category=(cat) # :nodoc:
-      return cat if @category == cat
+      return if @category == cat
 
       @category.delete(self) if @category
-      cat << self if cat
       @category = cat
+      cat << self if cat
     end
 
   end
@@ -257,8 +257,8 @@ class OpenRubyRMK::Backend::Category
       ### First parse all definitions ###
       category_node.xpath("definitions/definition").each do |def_node|
         raise(ParseError.new(path, def_node.line, "No attribute name found in line #{def_node.line}")) unless def_node["name"]
-        definition = AttributeDefintion.new(def_node.xpath("type").text,
-                                            def_node.xpath("description").text)
+        definition = AttributeDefinition.new(def_node.xpath("type").text.to_sym, # This to_sym should be safe as its not arbitrary at runtime
+                                             def_node.xpath("description").text)
         raise(ParseError.new(path,
                              nil,
                              "No attribute type information found for attribute `#{def_node['name']}'")
@@ -273,11 +273,12 @@ class OpenRubyRMK::Backend::Category
 
         entry_node.xpath("attribute").each do |attr_node|
           name = attr_node["name"] || raise(ParseError.new(path, attr_node.line, "No attribute name found in line #{attr_node.line}"))
+          name = name.to_sym # This to_sym should be safe as its not arbitrary at runtime
           raise(ParseError.new(path, attr_node.line, "Undefined attribute name `#{name}' in line #{attr_node.line}")) unless valid_attribute?(name)
 
           # Add the attribute, converting the string stored in XML
           # to whatever the attribute’s type definition demands.
-          entry[name] = ATTRIBUTE_TYPE_CONVERSIONS[@allowed_attributes[name]][attr_node.text]
+          entry[name] = ATTRIBUTE_TYPE_CONVERSIONS[@allowed_attributes[name].type][attr_node.text]
           add_entry(entry)
         end
       end
@@ -286,7 +287,13 @@ class OpenRubyRMK::Backend::Category
     cat
   end
 
-  # Create a new and empty category.
+  # call-seq:
+  #   new(name)             → a_category
+  #   new(name){|self| ...} → a_category
+  #
+  # Create a new and empty category. If a block is given, yields
+  # the newly created instance to the block in addition to
+  # returning it.
   # == Parameter
   # [name]
   #   The name of the category, as a string. May contain whitespace,
@@ -297,6 +304,8 @@ class OpenRubyRMK::Backend::Category
     @name               = name.to_str
     @allowed_attributes = {}
     @entries            = []
+
+    yield(self) if block_given?
   end
 
   #See accessor.
@@ -362,25 +371,26 @@ class OpenRubyRMK::Backend::Category
   # == Parameters
   # [name]
   #   The name of the attribute to allow, as a symbol.
-  # [args]
-  #   Either an instance of AttributeDefinition, or, more convenient,
-  #   named arguments as follows:
-  #   [:type]
-  #     The type of the attribute, as a symbol.
-  #   [:description]
-  #     A short description of this attribute to inform the
-  #     user what to put here. May be multiline.
+  # [type]
+  #   A symbol denoting the type of this attribute. When loading
+  #   entries from the XML, this information will be used to
+  #   convert the XML strings to proper Ruby objects of more
+  #   useful types. The list of possible types is available
+  #   via <tt>ATTRIBUTE_TYPE_CONVERSIONS.keys</tt>.
+  # [desc]
+  #   A short, probably multiline string describing this attribute.
+  #   May be used by UIs to display information when editing fields.
   # == Raises
   # [DuplicateAttribute]
   #   If you try to define an attribute more than once.
   # == Rermarks
   # * The already existing entries will have this attribute
   #   set to an empty string.
-  def define_attribute(name, args)
-    raise(DuplicateAttribute.new(name) if valid_attribute?(name)
-    definition = args.kind_of?(AttributeDefinition) ? args : AttributeDefinition.new(args)
+  def define_attribute(name, type, desc)
+    raise(DuplicateAttribute.new(name)) if valid_attribute?(name)
+    raise(ArgumentError, "Unknown type #{type.inspect}") unless ATTRIBUTE_TYPE_CONVERSIONS.has_key?(type)
 
-    @allowed_attributes[name] = definition
+    @allowed_attributes[name] = AttributeDefinition.new(type, desc)
     @entries.each do |entry|
       entry[name] = nil # Autoconverted to an empty string
     end
@@ -389,7 +399,7 @@ class OpenRubyRMK::Backend::Category
   #Removes an attribute (plus value) from each entry
   #in this category and disallows it.
   #If this attribute wasn’t existant before, does nothing.
-  def undefine_attribute(name)
+  def remove_attribute(name)
     return unless valid_attribute?(name)
 
     @entries.each do |entry|
@@ -442,8 +452,8 @@ class OpenRubyRMK::Backend::Category
         cat_node.entries do |entries_node|
           @entries.each do |entry|
             entries_node.entry do |entry_node|
-              entry.attributes.each do |attr|
-                entry_node.attribute(attr.value, :name => attr.name)
+              entry.each_attribute do |name, value|
+                entry_node.attribute(value, :name => name)
               end #each
             end #</entry>
           end #each
