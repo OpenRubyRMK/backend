@@ -39,16 +39,18 @@ class CategoryTest < Test::Unit::TestCase
     :type => :fire }
     items << item
 
+    assert_equal 2, items.count
+
     Dir.mktmpdir do |tmpdir|
       path = items.save(tmpdir)
 
       # Read it back in
       items = Category.from_file(path)
       assert_equal(2, items.count)
-      assert_includes(cat.allowed_attributes.keys, :name)
-      assert_includes(cat.allowed_attributes.keys, :type)
-      assert_equal(:string, cat.allowed_attributes[:name].type)
-      assert_equal(:ident, cat.allowed_attributes[:type].type)
+      assert_includes(items.allowed_attributes.keys, :name)
+      assert_includes(items.allowed_attributes.keys, :type)
+      assert_equal(:string, items.allowed_attributes[:name].type)
+      assert_equal(:ident, items.allowed_attributes[:type].type)
       assert_equal("Cool thing", items.entries.first[:name])
       assert_equal(:fire, items.entries.last[:type]) # Note this has done type conversion from the XML-stored string!
     end

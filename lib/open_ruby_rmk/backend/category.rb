@@ -136,6 +136,11 @@ class OpenRubyRMK::Backend::Category
       hsh.each {|k,v| self[k] = v}
     end
 
+    # Human-readable description
+    def inspect
+      "#<#{self.class} (#{@category ? @category.name : 'unassigned'}) #{@attributes.inspect}>"
+    end
+
     #Gets the value of the named attribute.
     def [](name)
       @attributes[name]
@@ -205,8 +210,23 @@ class OpenRubyRMK::Backend::Category
       return if @category == cat
 
       @category.delete(self) if @category
-      @category = cat
       cat << self if cat
+      @category = cat
+    end
+
+    # Forcibly sets the internal @category reference
+    # to +cat+, removing +self+ from the previously
+    # assigned category, if any. Note that in contrast
+    # to #category=, this method does not call Category#<<,
+    # i.e. it only sets one side of the relationship. The
+    # caller is now in charge to update the other side of
+    # the relationship (i.e. adding this entry to +cat+’s
+    # @entries) to ensure a proper object state.
+    # This method is not meant to be called from the
+    # public, so don’t do it.
+    def reset_category!(cat) # :nodoc:
+      @category.delete(self) if @category
+      @category = cat
     end
 
   end
@@ -279,8 +299,9 @@ class OpenRubyRMK::Backend::Category
           # Add the attribute, converting the string stored in XML
           # to whatever the attribute’s type definition demands.
           entry[name] = ATTRIBUTE_TYPE_CONVERSIONS[@allowed_attributes[name].type][attr_node.text]
-          add_entry(entry)
         end
+
+        add_entry(entry)
       end
     end
 
@@ -308,6 +329,11 @@ class OpenRubyRMK::Backend::Category
     yield(self) if block_given?
   end
 
+  # Human-readable description.
+  def inspect
+    "#<#{self.class} `#@name' with #{count}' entries>"
+  end
+
   #See accessor.
   def name=(str) # :nodoc:
     @name = str.to_str
@@ -331,8 +357,14 @@ class OpenRubyRMK::Backend::Category
   #   allowed in this category.
   def add_entry(entry)
     entry = Entry.new(entry) unless entry.is_a?(Entry)
-    entry.category = self
     check_attributes!(entry)
+
+    # Entry#category= would call us ourselves again,
+    # causing an infinite recursion. So instead, use
+    # #reset_category! which doesn’t do the category
+    # check (but still dissolves the relationship
+    # to any previous category properly).
+    entry.reset_category!(self)
     @entries.push(entry)
   end
 
@@ -349,7 +381,7 @@ class OpenRubyRMK::Backend::Category
   def delete(entry)
     return unless @entries.include?(entry)
     @entries.delete(entry)
-    entry.category = nil
+    entry.reset_category!(nil)
   end
 
   #Iterates over each Entry in this Category.
