@@ -1,5 +1,5 @@
 # -*- ruby -*-
-source "https://rubygems.org"
+source "http://rubygems.org"
 
 gem "ruby-tmx", :git => "git://github.com/Quintus/tmx-ruby.git"
 gem "nokogiri"
