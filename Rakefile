@@ -4,6 +4,7 @@ require "rake"
 require "rake/clean"
 require "rdoc/task"
 require "rubygems/package_task"
+require "paint"
 
 ENV["RDOCOPT"] = "" if ENV["RDOCOPT"]
 CLOBBER.include("doc")
@@ -13,6 +14,8 @@ task :console do
   ARGV.clear # IRB runs havoc otherwise
   require "irb"
   require_relative "lib/open_ruby_rmk/backend"
+  puts Paint["include OpenRubyRMK::Backend", :green]
+  include OpenRubyRMK::Backend
   puts "Loaded the OpenRubyRMK's backend library, version #{OpenRubyRMK::Backend.version}."
   IRB.start
 end
