@@ -10,9 +10,28 @@
 #by the user. Each item in this category has a specific number
 #of attributes (i.e. each item has the *same* attributes, but
 #most likely with different values assigned to them) and is
-#represented by an instance of class Cagegory::Entry. Finally,
-#the items’ attributes can be accessed by means of the
-#Category::Entry#[] and Category::Entry[]= methods.
+#represented by an instance of class Cagegory::Entry wheras the
+#abstract definition of an "item type" is represented by an
+#instance of Category::AttributeDefinition (a struct with which
+#you most likely won’t ever have direct contact as it’s created
+#for you in #define_attribute). Each attribute has a name (a
+#symbol) which points to the actual definition, which in turn
+#consists of the attribute’s data type and a short textual
+#description which can be used by UIs to guide the user. When
+#loading the category back from its XML representation with
+#the ::from_file method the attributes’ values are automatically
+#converted from the XML string back to a useful Ruby object as
+#layed out by the following table:
+#
+#  Data type │ Converted to instance of
+#  ──────────┼─────────────────────────
+#  :float    │ Float
+#  :ident    │ Symbol
+#  :number   │ Integer
+#  :string   │ String
+#
+#The exact conversion code is hold by the ATTRIBUTE_TYPE_CONVERSIONS
+#hash.
 #
 #==Example
 #  # Create the new category
@@ -20,7 +39,7 @@
 #
 #  # Define the attributes allowed in this category
 #  items.define_attribute(:name, :type => :string, :description => "The name of the item")
-#  items.define_attribute(:type, :type => :symbol, :description => "The elementary type of the item")
+#  items.define_attribute(:type, :type => :ident, :description => "The elementary type of the item")
 #
 #  # Add one entry to the items category
 #  item1 = Category::Entry.new
@@ -233,7 +252,7 @@ class OpenRubyRMK::Backend::Category
 
   # All attribute names allowed for entries in this
   # category. This is a hash mapping the attribute
-  # names (symbols) to instances of AttribtueDefinition.
+  # names (symbols) to instances of AttributeDefinition.
   attr_reader :allowed_attributes
   # All Entry instances associated with this category.
   attr_reader :entries
@@ -264,7 +283,7 @@ class OpenRubyRMK::Backend::Category
   #   The file to load from, either a string or a Pathname
   #   object. Note the filename is interpreted as a base-64-
   #   encoded string that will be the name of the category.
-  def self.from_file(path) # :nodoc:
+  def self.from_file(path)
     cat = allocate
     cat.instance_eval do
       category_node = Nokogiri::XML(File.open(path)).root
@@ -331,7 +350,7 @@ class OpenRubyRMK::Backend::Category
 
   # Human-readable description.
   def inspect
-    "#<#{self.class} `#@name' with #{count}' entries>"
+    "#<#{self.class} `#@name' with #{count} entries>"
   end
 
   #See accessor.
