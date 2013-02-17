@@ -1,6 +1,6 @@
 GIT
-  remote: git://github.com/Quintus/tmx-ruby.git
-  revision: 8add349c6934e4533200213e57fe795a74d8557d
+  remote: git://github.com/Hanmac/tmx-ruby.git
+  revision: fd959127e82d2e587149413d459ce4cb11b0c3e5
   specs:
     ruby-tmx (0.0.1.dev)
       nokogiri
