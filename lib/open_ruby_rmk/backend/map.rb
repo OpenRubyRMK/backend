@@ -41,6 +41,10 @@
 # #mount and #unmount is usually more clear as it resembles
 # the terminology generally known from Linux file system
 # operations (the +mount+ and +umount+ commands).
+#
+# --
+# FIXME: Make this a subclass of TiledTmx::Map.
+# ++
 class OpenRubyRMK::Backend::Map
   include OpenRubyRMK::Backend::Eventable
 
@@ -325,6 +329,58 @@ class OpenRubyRMK::Backend::Map
 
     notify_observers :layer_added, :layer => layer
     layer
+  end
+
+  # Set the map’s width in tiles.
+  # == Parameter
+  # [num]
+  #   The new number of columns.
+  # == Events
+  # [size_changed]
+  #   Always emitted when calling this method. The callback
+  #   receives a :size parameter width an array containing
+  #   the new [width, height].
+  # == Remarks
+  # Question: Why can’t I set this directly on the #tmx_map?
+  #
+  # Answer: Because this wouldn’t emit the :size_changed event.
+  def width=(num)
+    changed
+    @tmx_map.width = num
+    notify_observers :size_changed, :size => [@tmx_map.width, @tmx_map.height]
+  end
+
+  # Set the map’s height in tiles.
+  # == Parameter
+  # [num]
+  #   The new number of rows.
+  # == Events
+  # [size_changed]
+  #   Always emitted when calling this method. The callback
+  #   receives a :size parameter width an array containing
+  #   the new [width, height].
+  # == Remarks
+  # Question: Why can’t I set this directly on the #tmx_map?
+  #
+  # Answer: Because this wouldn’t emit the :size_changed event.
+  def height=(num)
+    changed
+    @tmx_map.height = num
+    notify_observers :size_changed, :size => [@tmx_map.width, @tmx_map.height]
+  end
+
+  # The map’s number of logical columns. Same as:
+  #   map.tmx_map.width
+  # This method mainly exists for symmetry with #width=.
+  def width
+    @tmx_map.width
+  end
+
+  # The map’s number of logical rows. Same as:
+  #   map.tmx_map.height
+  # This method mainly exists for symmetry with #height=.
+  def height
+    @tmx_map.height
   end
 
   #call-seq:

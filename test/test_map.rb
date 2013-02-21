@@ -222,4 +222,25 @@ class MapTest < Test::Unit::TestCase
     end
   end
 
+  def test_width_and_height
+    assert_equal(@map.tmx_map.width, @map.width)
+    assert_equal(@map.tmx_map.height, @map.height)
+
+    event_fired = false
+    @map.observe(:size_changed) do |event, sender, info|
+      event_fired = true
+    end
+
+    @map.width = 100
+    assert event_fired, "No :size_changed event was fired"
+    assert_equal(100, @map.width)
+    assert_equal(100, @map.tmx_map.width)
+
+    event_fired = false
+    @map.height = 123
+    assert event_fired, "No :size_changed event was issued"
+    assert_equal(123, @map.height)
+    assert_equal(123, @map.tmx_map.height)
+  end
+
 end
