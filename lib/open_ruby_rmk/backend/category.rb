@@ -38,8 +38,8 @@
 #  items = Category.new("items")
 #
 #  # Define the attributes allowed in this category
-#  items.define_attribute(:name, :type => :string, :description => "The name of the item")
-#  items.define_attribute(:type, :type => :ident, :description => "The elementary type of the item")
+#  items.define_attribute :name, :string, "The name of the item"
+#  items.define_attribute :type, :ident, "The elementary type of the item"
 #
 #  # Add one entry to the items category
 #  item1 = Category::Entry.new
@@ -436,14 +436,14 @@ class OpenRubyRMK::Backend::Category
   #   If you try to define an attribute more than once.
   # == Rermarks
   # * The already existing entries will have this attribute
-  #   set to an empty string.
+  #   set to +nil+.
   def define_attribute(name, type, desc)
     raise(DuplicateAttribute.new(name)) if valid_attribute?(name)
     raise(ArgumentError, "Unknown type #{type.inspect}") unless ATTRIBUTE_TYPE_CONVERSIONS.has_key?(type)
 
     @allowed_attributes[name] = AttributeDefinition.new(type, desc)
     @entries.each do |entry|
-      entry[name] = nil # Autoconverted to an empty string
+      entry[name] = nil
     end
   end
 
