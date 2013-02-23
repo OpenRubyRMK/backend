@@ -161,4 +161,21 @@ class CategoryTest < Test::Unit::TestCase
     assert_nil(entry[:bar])
   end
 
+  def test_definitions_access
+    cat = Category.new("stuff")
+    assert_empty cat.attribute_names
+
+    cat.define_attribute :foo, :ident, "Foo"
+    cat.define_attribute :bar, :number, "Bar"
+
+    assert_includes cat.attribute_names, :foo
+    assert_includes cat.attribute_names, :bar
+    assert_equal cat.allowed_attributes.keys.sort, cat.attribute_names.sort
+
+    assert_equal :ident, cat[:foo].type
+    assert_equal "Foo", cat[:foo].description
+    assert_equal :number, cat.get_definition(:bar).type
+    assert_equal "Bar", cat.get_definition(:bar).description
+  end
+
 end

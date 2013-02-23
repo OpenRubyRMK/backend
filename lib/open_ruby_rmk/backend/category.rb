@@ -394,6 +394,29 @@ class OpenRubyRMK::Backend::Category
     self
   end
 
+  # call-seq:
+  #   cat[name]            → an_attribute_definition or nil
+  #   get_definition(name) → an_attribute_definition or nil
+  # Returns the AttributeDefinition for an attribute name.
+  # == Parameters
+  # [name]
+  #   The name of the attribute whose definition you
+  #   want to retrieve.
+  # == Return value
+  # An instance of AttributeDefinition, or +nil+, if
+  # this attribute is not defined.
+  def get_definition(name)
+    return nil unless valid_attribute?(name)
+    @allowed_attributes[name]
+  end
+  alias [] get_definition
+
+  # Returns an array of symbols describing the
+  # names of the attributes.
+  def attribute_names
+    @allowed_attributes.keys
+  end
+
   # Deletes an entry from this category. The entry has assigned
   # +nil+ as the category afterwards.
   # If +entry+ doesn’t belong to this category, does nothing.
