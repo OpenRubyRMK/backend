@@ -536,7 +536,7 @@ class OpenRubyRMK::Backend::Category
       end #</category>
     end # Builder.new
 
-    target = Pathname.new(categories_dir).join("#{self.class.generate_file_id}.xml")
+    target = Pathname.new(categories_dir).join("#{'%04d' % self.class.generate_file_id}.xml")
     target.open("w"){|file| file.write(b.to_xml)}
     target
   end

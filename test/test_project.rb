@@ -54,6 +54,7 @@ class ProjectTest < Test::Unit::TestCase
     assert_dir(@tmpdir + "data" + "resources" + "graphics" + "tilesets")
     assert_dir(@tmpdir + "data" + "scripts")
     assert_file(@tmpdir + "data" + "resources" + "graphics" + "misc" + "ruby.png")
+    assert_dir(@tmpdir + "data" + "categories")
     assert_equal(Backend.version, pr.config[:open_ruby_rmk][:version])
     assert(pr.config[:project][:name], "Project has no full name!")
     assert_equal("0.0.1", pr.config[:project][:version])
@@ -77,7 +78,7 @@ class ProjectTest < Test::Unit::TestCase
     refute_exists(@tmpdir)
   end
 
-  def test_saving
+  def test_map_saving
     pr = Project.new(@tmpdir)
     assert_file(@tmpdir + "data" + "maps" + "0001.tmx") # One map is in the skeleton by default
     assert_equal(1, Nokogiri::XML(File.read(@tmpdir + "data" + "maps" + "maps.xml")).root.xpath("map").count)
@@ -88,11 +89,33 @@ class ProjectTest < Test::Unit::TestCase
 
     pr.add_root_map(Map.new(2)) # Duplicate ID!
     assert_raises(OpenRubyRMK::Backend::Errors::DuplicateMapID){pr.save}
+  end
 
+  def test_config_saving
     pr = Project.new(@tmpdir)
     pr.config["foo"] = "bar"
     pr.save
     assert_equal("bar", YAML.load_file(@tmpdir + "project.rmk")["foo"])
+  end
+
+  def test_category_saving_and_loading
+    pr = Project.new(@tmpdir)
+    pr.categories.clear # Delete predefined categories
+    cat = Category.new("Items")
+    cat.define_attribute :name, :string, "The name"
+    pr.add_category(cat)
+    pr.save
+
+    system "tree #@tmpdir"
+
+    assert_file @tmpdir + "data" + "categories" + "0001.xml"
+
+    pr = Project.load_project_file(@tmpdir + "project.rmk")
+    assert_equal 1, pr.categories.count
+    assert_equal "Items", pr.categories.first.name
+    assert_equal [:name], pr.categories.first.allowed_attribute_names
+    assert_equal :string, pr.categories.first[:name].type
+    assert_equal "The name", pr.categories.first[:name].description
   end
 
   def test_root_maps
@@ -129,6 +152,42 @@ class ProjectTest < Test::Unit::TestCase
     pr.remove_resource("graphics/misc/#{@resource_path.basename}")
     refute_exists(@tmpdir + "myproject" + "data" + "resources" + "graphics" + "misc" + @resource_path.basename)
     refute_exists(@tmpdir + "myproject" + "data" + "resources" + "graphics" + "misc" + "#{@resource_path.basename}.yml")
+  end
+
+  def test_categories
+    pr = Project.new(@tmpdir + "myproject")
+    pr.categories.clear # Remove predefined categories
+    assert_empty pr.categories
+
+    callback_fired = false
+    pr.observe(:category_added){callback_fired = true}
+
+    items = Category.new("Items")
+    pr.add_category(items)
+    assert callback_fired, "Didn't issue :category_added event!"
+    assert_includes pr.categories, items
+
+    items.define_attribute :name, :string, "The name"
+    assert_includes pr.categories, items
+
+    skills = Category.new("Skills")
+    pr.add_category(skills)
+    assert_includes pr.categories, skills
+    assert_includes pr.categories, items
+    assert_equal 2, pr.categories.count
+
+    callback_fired = false
+    pr.observe(:category_removed){callback_fired = true}
+
+    pr.remove_category(skills)
+    assert callback_fired, "Didn't issue the :category_removed event!"
+    refute_includes pr.categories, skills
+    assert_includes pr.categories, items
+    assert_equal 1, pr.categories.count
+
+    pr.remove_category("Items")
+    refute_includes pr.categories, items
+    assert_empty pr.categories
   end
 
 end

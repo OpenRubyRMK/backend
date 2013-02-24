@@ -12,7 +12,7 @@ class OpenRubyRMK::Backend::Project
 
   #Struct encapsulating all the path information for a
   #single project.
-  Paths = Struct.new(:root, :rmk_file, :data_dir, :resources_dir, :maps_dir, :maps_file, :graphics_dir, :tilesets_dir, :scripts_dir, :bin_dir, :start_file) do
+  Paths = Struct.new(:root, :rmk_file, :data_dir, :resources_dir, :maps_dir, :maps_file, :graphics_dir, :tilesets_dir, :scripts_dir, :bin_dir, :start_file, :categories_dir) do
     def initialize(root) # :nodoc:
       self.root          = Pathname.new(root).expand_path
       self.rmk_file      = self.root     + "project.rmk"
@@ -25,6 +25,7 @@ class OpenRubyRMK::Backend::Project
       self.scripts_dir   = data_dir      + "scripts"
       self.bin_dir       = self.root     + "bin"
       self.start_file    = bin_dir       + "start.rb"
+      self.categories_dir = data_dir     + "categories"
     end
   end
 
@@ -61,6 +62,7 @@ class OpenRubyRMK::Backend::Project
       @paths       = Paths.new(File.dirname(path))
       @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
       @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
+      @categories  = @paths.categories_dir.children.map{|path| OpenRubyRMK::Backend::Category.from_file(path) if path.file?}
     end
 
     proj
@@ -85,7 +87,7 @@ class OpenRubyRMK::Backend::Project
     create_skeleton
     @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
     @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file) # Skeleton may (and most likely does) contain maps
-    @categories  = []
+    @categories  = @paths.categories_dir.children.map{|path| OpenRubyRMK::Backend::Category.from_file(path) if path.file?}
   end
 
   # Human-readable description.
@@ -148,13 +150,41 @@ class OpenRubyRMK::Backend::Project
     notify_observers(:root_map_removed, :map => map)
   end
 
+  # Adds the a Category instance to the list of categories for this
+  # project.
+  # == Parameter
+  # [cat]
+  #   The Category to add to the project.
+  # == Events
+  # [category_added]
+  #   Only issued if +cat+ is really added to the project.
+  #   The callback receives +cat+ as :category.
+  # == Remarks
+  # If +cat+ is already part of the project, does nothing.
   def add_category(cat)
+    return if @categories.include?(cat)
+
     changed
     @categories << cat
-    notify_obervers(:category_added, :category => cat)
+    notify_observers(:category_added, :category => cat)
   end
 
+  # Removes a Category from the project.
+  # == Parameter
+  # [cat]
+  #   The Category instance to remove. May also be a string,
+  #   in which case the first category with this string as
+  #   its +name+ is removed.
+  # == Events
+  # [category_removed]
+  #   Only issued if a category was really removed from the
+  #   project. The callback receives the removed Category
+  #   instance as :category.
+  # == Remarks
+  # If +cat+ is not part of the project or a category with this
+  # name can’t be found, nothing happens.
   def remove_category(cat)
+    cat = @categories.find{|c| c.name == cat} unless cat.kind_of?(OpenRubyRMK::Backend::Category)
     return unless @categories.include?(cat)
 
     changed
@@ -164,7 +194,16 @@ class OpenRubyRMK::Backend::Project
 
   # Saves all the project’s pecularities out to disk.
   def save
+    # The project settings
     @paths.rmk_file.open("w"){|f| YAML.dump(@config.recursively_stringify_keys, f)}
+
+    # The categories (clearing the directory to ensure deleted
+    # categories really get removed)
+    @paths.categories_dir.each_child{|path| path.delete if path.file?}
+    @categories.each{|cat| cat.save(@paths.categories_dir)}
+
+    # The maps (clearing the directory to ensure deleted
+    # maps really get removed)
     OpenRubyRMK::Backend::MapStorage.save_maps_tree(@paths.maps_dir, @paths.maps_file, *@root_maps)
   end
 
