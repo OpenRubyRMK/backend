@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<category name="items">
+<category name="Items">
   <definitions>
     <definition name="name">
       <type>string</type>
