@@ -106,9 +106,7 @@ class ProjectTest < Test::Unit::TestCase
     pr.add_category(cat)
     pr.save
 
-    system "tree #@tmpdir"
-
-    assert_file @tmpdir + "data" + "categories" + "0001.xml"
+    assert_file @tmpdir + "data" + "categories" + "Items.xml"
 
     pr = Project.load_project_file(@tmpdir + "project.rmk")
     assert_equal 1, pr.categories.count

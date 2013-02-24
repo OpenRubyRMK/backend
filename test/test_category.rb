@@ -161,6 +161,16 @@ class CategoryTest < Test::Unit::TestCase
     assert_nil(entry[:bar])
   end
 
+  def test_escape_filenames
+    assert_equal "Bären", Category.escape_filename("Bären")
+    assert_equal "ASCII", Category.escape_filename("ASCII")
+    assert_equal "GutBöse", Category.escape_filename("Gut/Böse")
+    assert_equal "BackSlash", Category.escape_filename("Back\\Slash")
+    assert_equal "No_Space", Category.escape_filename("No Space")
+    assert_equal "No_Unicode_Space", Category.escape_filename("No Unicode Space")
+    assert_equal "NoPunctuation", Category.escape_filename(".No;Punct%uat:ion?!")
+  end
+
   def test_definitions_access
     cat = Category.new("stuff")
     assert_empty cat.attribute_names

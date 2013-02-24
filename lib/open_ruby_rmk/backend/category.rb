@@ -266,15 +266,10 @@ class OpenRubyRMK::Backend::Category
   # :method: to_a
   # Same as the #entries accessor.
 
-  # Generates and returns a one-time file ID.
-  # Only used when writing out the category files to
-  # ensure they have unique filenames without having
-  # to know anything about the other existing categories.
-  # Don’t call this directly.
-  def self.generate_file_id # :nodoc:
-    @file_id ||= 0
-
-    @file_id += 1
+  # Escapes +str+ in a way that it should be usable as a valid
+  # filename on most operating systems. Returns a new string.
+  def self.escape_filename(str)
+    str.gsub(/[[:punct:]]/, "").gsub(/[[:space:]]/, "_")
   end
 
   # Loads a Category from the file at the given path.
@@ -483,6 +478,12 @@ class OpenRubyRMK::Backend::Category
     @allowed_attributes.delete(name)
   end
 
+  # Returns the list of allowed attribute names as an array
+  # of symbols (unsorted).
+  def allowed_attribute_names
+    @allowed_attributes.keys
+  end
+
   # call-seq:
   #   each_allowed_attribute                         → an_enumerator
   #   each_allowed_attribute{|name, definition| ...} → self
@@ -536,7 +537,7 @@ class OpenRubyRMK::Backend::Category
       end #</category>
     end # Builder.new
 
-    target = Pathname.new(categories_dir).join("#{'%04d' % self.class.generate_file_id}.xml")
+    target = Pathname.new(categories_dir).join("#{self.class.escape_filename(@name)}.xml")
     target.open("w"){|file| file.write(b.to_xml)}
     target
   end
