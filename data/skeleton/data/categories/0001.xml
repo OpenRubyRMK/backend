@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<category name="items">
+  <definitions>
+    <definition name="name">
+      <type>string</type>
+      <description>The item’s name</description>
+    </definition>
+    <definition name="type">
+      <type>ident</type>
+      <description>The item’s type</description>
+    </definition>
+    <definition name="description">
+      <type>string</type>
+      <description>A short description of this item</description>
+    </definition>
+  </definitions>
+  <entries>
+    <entry>
+      <attribute name="name">Violin</attribute>
+      <attribute name="type">questitem</attribute>
+      <attribute name="description">A mysterious violin found in the western forests</attribute>
+    </entry>
+    <entry>
+      <attribute name="name">Potion</attribute>
+      <attribute name="type">oneshot</attribute>
+      <attribute name="description">Regenerates 100HP</attribute>
+    </entry>
+  </entries>
+</category>
