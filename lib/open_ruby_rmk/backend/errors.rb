@@ -136,5 +136,19 @@ module OpenRubyRMK::Backend::Errors
 
   end
 
+  # Raised if an entry is somehow invalid.
+  class InvalidEntry < OpenRubyRMKBackendError
+
+    # The bad Category::Entry instance.
+    attr_reader :entry
+
+    # Create a new exception of this type, passing the entry in question
+    # and the error message.
+    def initialize(entry, message)
+      @entry = entry
+      super(message)
+    end
+
+  end
 
 end

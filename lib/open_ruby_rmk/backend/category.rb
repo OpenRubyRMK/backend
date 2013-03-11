@@ -115,7 +115,8 @@ class OpenRubyRMK::Backend::Category
   # attributes like what type an attribute must have
   # (especially useful for deserializing from XML). You
   # most likely don’t have to use this directly.
-  AttributeDefinition = Struct.new(:type, :description)
+  # For most types, you won’t need all attributes of this struct.
+  AttributeDefinition = Struct.new(:type, :description, :minimum, :maximum, :choices)
 
   # This class represents a single entry in a category. It may
   # have several attributes (accessible via #[] and #[]=), and
@@ -291,14 +292,28 @@ class OpenRubyRMK::Backend::Category
       ### First parse all definitions ###
       category_node.xpath("definitions/definition").each do |def_node|
         raise(ParseError.new(path, def_node.line, "No attribute name found in line #{def_node.line}")) unless def_node["name"]
-        definition = AttributeDefinition.new(def_node.xpath("type").text.to_sym, # This to_sym should be safe as its not arbitrary at runtime
-                                             def_node.xpath("description").text)
+
+        # Create a definition from the nodes found under the <definition> node.
+        # The special <type> node’s content is automatically converted to a symbol
+        # to accomodate programming, and should be safe because it’s not arbitrary
+        # at runtime.
+        definition             = AttributeDefinition.new
+        definition.type        = def_node.xpath("type").text.to_sym
+        definition.description = def_node.xpath("description").text
+        definition.minimum     = def_node.xpath("minimum").text.to_i unless def_node.xpath("minimum").empty?
+        definition.maximum     = def_node.xpath("maximum").text.to_i unless def_node.xpath("maximum").empty?
+        definition.choices     = def_node.xpath("choices").text.split(/,\s?/).map(&:to_sym) unless def_node.xpath("choices").empty?
+
+        # The <type> node is required.
         raise(ParseError.new(path,
                              nil,
                              "No attribute type information found for attribute `#{def_node['name']}'")
               ) if definition.type.nil? || definition.type.empty?
 
-        @allowed_attributes[def_node["name"].to_sym] = definition # This to_sym should be safe as its not arbitrary at runtime
+        # Store the definition using the name in the attribute node.
+        # Again, the to_sym should be safe as it’s not arbitary
+        # at runtime.
+        @allowed_attributes[def_node["name"].to_sym] = definition
       end
 
       ### Now retrieve all the attributes ###
@@ -449,17 +464,31 @@ class OpenRubyRMK::Backend::Category
   # [desc]
   #   A short, probably multiline string describing this attribute.
   #   May be used by UIs to display information when editing fields.
+  # [other ({})]
+  #   Other optional attributes to set on the AttributeDefinition
+  #   instance created by this method. Currently, the possible
+  #   additional attributes are as follows:
+  #   [minimum]
+  #     Used together with +type+ set to +number+. Minimum value.
+  #   [maximum]
+  #     Used together with +type+ set to +number+. Maximum value.
+  #   [choices]
+  #     Used together with +type+ set to +ident+. An array of
+  #     symbols denoting the allowed identifiers for this attribute.
   # == Raises
   # [DuplicateAttribute]
   #   If you try to define an attribute more than once.
   # == Rermarks
   # * The already existing entries will have this attribute
   #   set to +nil+.
-  def define_attribute(name, type, desc)
+  def define_attribute(name, type, desc, other = {})
     raise(DuplicateAttribute.new(name)) if valid_attribute?(name)
     raise(ArgumentError, "Unknown type #{type.inspect}") unless ATTRIBUTE_TYPE_CONVERSIONS.has_key?(type)
 
-    @allowed_attributes[name] = AttributeDefinition.new(type, desc)
+    definition = AttributeDefinition.new(type, desc)
+    other.each_pair{|k, v| definition[k] = v}
+    @allowed_attributes[name] = definition
+
     @entries.each do |entry|
       entry[name] = nil
     end
@@ -519,7 +548,10 @@ class OpenRubyRMK::Backend::Category
           @allowed_attributes.each_pair do |name, definition|
             defs_node.definition(:name => name) do |def_node|
               def_node.type(definition.type.to_s)
-              def_node.description(definition.description.to_s) # May be nil
+              def_node.description(definition.description.to_s)
+              def_node.minimum(definition.minimum.to_s) if definition.minimum
+              def_node.maximum(definition.maximum.to_s) if definition.maximum
+              def_node.choices(definition.choices.join(",")) if definition.choices
             end # </definition>
           end # each_pair
         end # </definitions>

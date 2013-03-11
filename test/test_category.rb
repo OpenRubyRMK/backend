@@ -28,11 +28,13 @@ class CategoryTest < Test::Unit::TestCase
   def test_from_and_to_xml
     items = Category.new("items")
     items.define_attribute :name, :string, "The name"
-    items.define_attribute :type, :ident, "The type"
+    items.define_attribute :type, :ident, "The type", :choices => [:ice, :earth, :fire]
+    items.define_attribute :grade_of_nonsense, :number, "?!", :minimum => 10, :maximum => 20
 
     item = Category::Entry.new
     item[:name] = "Cool thing"
     item[:type] = :ice
+    item[:grade_of_nonsense] = 12
     items << item
 
     item = { :name => "Hot thing",
@@ -47,12 +49,22 @@ class CategoryTest < Test::Unit::TestCase
       # Read it back in
       items = Category.from_file(path)
       assert_equal(2, items.count)
+
       assert_includes(items.allowed_attributes.keys, :name)
       assert_includes(items.allowed_attributes.keys, :type)
+      assert_includes(items.allowed_attributes.keys, :grade_of_nonsense)
+
+      assert_equal(10, items.allowed_attributes[:grade_of_nonsense].minimum)
+      assert_equal(20, items.allowed_attributes[:grade_of_nonsense].maximum)
+      assert_includes(items.allowed_attributes[:type].choices, :ice)
+      assert_includes(items.allowed_attributes[:type].choices, :earth)
+      assert_includes(items.allowed_attributes[:type].choices, :fire)
       assert_equal(:string, items.allowed_attributes[:name].type)
       assert_equal(:ident, items.allowed_attributes[:type].type)
+
       assert_equal("Cool thing", items.entries.first[:name])
       assert_equal(:fire, items.entries.last[:type]) # Note this has done type conversion from the XML-stored string!
+      assert_equal(12, items.entries.first[:grade_of_nonsense])
     end
   end
 
@@ -186,6 +198,21 @@ class CategoryTest < Test::Unit::TestCase
     assert_equal "Foo", cat[:foo].description
     assert_equal :number, cat.get_definition(:bar).type
     assert_equal "Bar", cat.get_definition(:bar).description
+  end
+
+  def test_minimum_and_maximum
+    cat = Category.new("stuff")
+    cat.define_attribute :foo, :number, "Foo", :minimum => 0, :maximum => 100
+    cat.define_attribute :bar, :float, "Bar", :minimum => -3.2, :maximum => 2.6
+
+    assert_raises(Errors::InvalidEntry){cat << {:foo => -50, :bar => 0}}
+    assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => 5000, :bar => 0)}
+    assert_raises(Errors::InvalidEntry){cat << {:foo => 50, :bar => -100}}
+    assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => 50, :bar => -100)}
+  end
+
+  def test_choices
+    flunk "Please write a test for validating choices on attribute definitions!"
   end
 
 end
