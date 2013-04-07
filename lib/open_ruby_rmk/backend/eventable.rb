@@ -20,6 +20,41 @@
 # or similar in your +update+ method (which you still can do,
 # if you prefer or if it better fits your situation).
 #
+# == Example
+#
+#   class Car
+#     include Eventable
+#
+#     attr_reader :velocity
+#
+#     def initialize
+#       @velocity = 0
+#       @working = true
+#     end
+#
+#     def accelerate(delta)
+#       changed
+#       @velocity += delta
+#       notify_observers :velocity_changed, :new_velocity => @velocity
+#     end
+#
+#     def explode!
+#       changed
+#       puts "BOOOOM"
+#       @velocity = 0
+#       @working = false
+#       notify_observers :velocity_changed, :new_velocity => 0
+#       notify_observers :exploded
+#     end
+#
+#   end
+#
+#   car = Car.new
+#   car.observe(:velocity_changed){|event, sender, info| puts "New velocity: #{info[:new_velocity]}"}
+#   car.accelerate(10) #=> New velocity: 10
+#   car.accelerate(20) #=> New velocity: 30
+#   car.explode!       #=> New velocity: 0
+#
 # NOTE: This module may be extended later.
 module OpenRubyRMK::Backend::Eventable
   include Observable
@@ -46,6 +81,7 @@ module OpenRubyRMK::Backend::Eventable
   # Works the same way as Observable#notify_observers, but
   # automatically inserts +self+ as the second argument to
   # the +super+ call so that observers know who called.
+  # +info+ is a hash that will be passed through to the observers.
   def notify_observers(event, info = {})
     super(event, self, info)
   end
