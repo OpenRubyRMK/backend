@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/Hanmac/tmx-ruby.git
-  revision: fd959127e82d2e587149413d459ce4cb11b0c3e5
+  revision: 585a6404c1b5386a72861fcf5eade487d2f09775
   specs:
     ruby-tmx (0.0.1.dev)
       nokogiri
@@ -10,17 +10,17 @@ GEM
   remote: http://rubygems.org/
   specs:
     ansi (1.4.3)
-    emerald (0.0.1.alpha4)
-      rdoc (>= 3.12)
+    emerald (0.0.1.alpha5)
+      rdoc (>= 4.0.0)
       sass (>= 3.2.0)
     json (1.7.7)
-    nokogiri (1.5.6)
-    paint (0.8.5)
-    rake (10.0.3)
-    rbtree (0.3.0)
-    rdoc (3.12.1)
+    nokogiri (1.5.9)
+    paint (0.8.6)
+    rake (10.0.4)
+    rbtree (0.4.1)
+    rdoc (4.0.1)
       json (~> 1.4)
-    sass (3.2.5)
+    sass (3.2.8)
     turn (0.9.6)
       ansi
 

@@ -181,7 +181,7 @@ class OpenRubyRMK::Backend::Category
       begin
         @attributes[name] = val
         @category.check_attributes!(self) if @category
-      rescue OpenRubyRMK::Backend::Errors::UnknownAttribute
+      rescue OpenRubyRMK::Backend::Errors::UnknownAttribute, OpenRubyRMK::Backend::Errors::InvalidEntry
         # Ensure we clean up the entry, so that if the user rescues
         # this exception, the entry doesn’t have the attribute set
         # nevertheless.
@@ -528,13 +528,34 @@ class OpenRubyRMK::Backend::Category
 
   # Checks whether +entry+ (an Entry instance) is valid in the context of this
   # category. If it isn’t, raises an instance of UnknownAttribute,
-  # otherwise does nothing; in any case, doesn’t alter the
+  # or InvalidEntry, otherwise does nothing; in any case, doesn’t alter the
   # state of neither the category nor the entry.
   # This is an internal method called when you modify entries in
   # categories.
   def check_attributes!(entry) # :nodoc:
     entry.each_attribute do |attr_name, attr_value|
+
+      # First check if this attribute is allowed at all in
+      # this category.
       raise(UnknownAttribute.new(self, entry, attr_name)) unless valid_attribute?(attr_name)
+      definition = @allowed_attributes[attr_name]
+
+      # Then check if it fulfills the spec set for the attribute.
+      if definition.type == :number || definition.type == :float
+
+        if definition.minimum && attr_value < definition.minimum
+          raise(InvalidEntry.new(attr_name, "Value is below minimum: #{attr_value}"))
+        elsif definition.maximum && attr_value > definition.maximum
+          raise(InvalidEntry.new(attr_name, "Value is above maximum: #{attr_value}"))
+        end
+
+      elsif definition.type == :ident
+
+        if definition.choices && !definition.choices.include?(attr_value)
+          raise(InvalidEntry.new(attr_name, "Value is not an allowed choice: #{attr_value}"))
+        end
+
+      end
     end
   end
 

@@ -212,7 +212,17 @@ class CategoryTest < Test::Unit::TestCase
   end
 
   def test_choices
-    flunk "Please write a test for validating choices on attribute definitions!"
+    cat = Category.new("stuff")
+    cat.define_attribute :foo, :ident, "Foo", :choices => [:aa, :ab]
+    cat.define_attribute :bar, :ident, "Bar"
+
+    assert_raises(Errors::InvalidEntry){cat << {:foo => :bb}}
+    assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => :bb)}
+    # The following shouldn’t raise
+    cat << {:foo => :aa}
+    cat << Category::Entry.new(:foo => :aa)
+    cat << {:bar => :bbbbb}
+    cat << Category::Entry.new(:bar => :bbbbb)
   end
 
 end
