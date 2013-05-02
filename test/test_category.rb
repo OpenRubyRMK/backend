@@ -209,6 +209,11 @@ class CategoryTest < Test::Unit::TestCase
     assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => 5000, :bar => 0)}
     assert_raises(Errors::InvalidEntry){cat << {:foo => 50, :bar => -100}}
     assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => 50, :bar => -100)}
+
+    # Tests the defaults of :minimum and :maximum which should allow
+    # arbitrary numbers with no limitations.
+    cat.define_attribute :baz, :number, "Baz"
+    cat << Category::Entry.new(:foo => 50, :bar => 1.2, :baz => 9)
   end
 
   def test_choices
@@ -218,11 +223,22 @@ class CategoryTest < Test::Unit::TestCase
 
     assert_raises(Errors::InvalidEntry){cat << {:foo => :bb}}
     assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => :bb)}
+
     # The following shouldn’t raise
     cat << {:foo => :aa}
     cat << Category::Entry.new(:foo => :aa)
+    # If no :choices are defined, everything should be allowed
     cat << {:bar => :bbbbb}
     cat << Category::Entry.new(:bar => :bbbbb)
+  end
+
+  def test_attribute_definitions
+    a = Category::AttributeDefinition.new
+    assert_nil a.type
+    assert_equal "", a.description
+    assert_equal -Float::INFINITY, a.minimum
+    assert_equal Float::INFINITY, a.maximum
+    assert_empty a.choices
   end
 
 end

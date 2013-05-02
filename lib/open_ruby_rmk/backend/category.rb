@@ -116,7 +116,15 @@ class OpenRubyRMK::Backend::Category
   # (especially useful for deserializing from XML). You
   # most likely don’t have to use this directly.
   # For most types, you won’t need all attributes of this struct.
-  AttributeDefinition = Struct.new(:type, :description, :minimum, :maximum, :choices)
+  AttributeDefinition = Struct.new(:type, :description, :minimum, :maximum, :choices) do
+    def initialize(*) # :nodoc:
+      super
+      self.description ||= ""
+      self.minimum ||= -Float::INFINITY
+      self.maximum ||= Float::INFINITY
+      self.choices ||= []
+    end
+  end
 
   # This class represents a single entry in a category. It may
   # have several attributes (accessible via #[] and #[]=), and
@@ -543,15 +551,15 @@ class OpenRubyRMK::Backend::Category
       # Then check if it fulfills the spec set for the attribute.
       if definition.type == :number || definition.type == :float
 
-        if definition.minimum && attr_value < definition.minimum
+        if attr_value && attr_value < definition.minimum
           raise(InvalidEntry.new(attr_name, "Value is below minimum: #{attr_value}"))
-        elsif definition.maximum && attr_value > definition.maximum
+        elsif attr_value && attr_value > definition.maximum
           raise(InvalidEntry.new(attr_name, "Value is above maximum: #{attr_value}"))
         end
 
       elsif definition.type == :ident
 
-        if definition.choices && !definition.choices.include?(attr_value)
+        if !definition.choices.empty? && !definition.choices.include?(attr_value)
           raise(InvalidEntry.new(attr_name, "Value is not an allowed choice: #{attr_value}"))
         end
 
