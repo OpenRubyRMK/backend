@@ -38,8 +38,8 @@
 #  items = Category.new("items")
 #
 #  # Define the attributes allowed in this category
-#  items.define_attribute :name, :string, "The name of the item"
-#  items.define_attribute :type, :ident, "The elementary type of the item"
+#  items.define_attribute :name, type: :string, description: "The name of the item"
+#  items.define_attribute :type, type: :ident, description: "The elementary type of the item"
 #
 #  # Add one entry to the items category
 #  item1 = Category::Entry.new
@@ -463,40 +463,44 @@ class OpenRubyRMK::Backend::Category
   # == Parameters
   # [name]
   #   The name of the attribute to allow, as a symbol.
-  # [type]
-  #   A symbol denoting the type of this attribute. When loading
-  #   entries from the XML, this information will be used to
-  #   convert the XML strings to proper Ruby objects of more
-  #   useful types. The list of possible types is available
-  #   via <tt>ATTRIBUTE_TYPE_CONVERSIONS.keys</tt>.
-  # [desc]
-  #   A short, probably multiline string describing this attribute.
-  #   May be used by UIs to display information when editing fields.
-  # [other ({})]
-  #   Other optional attributes to set on the AttributeDefinition
-  #   instance created by this method. Currently, the possible
-  #   additional attributes are as follows:
+  # [other]
+  #   Either an instance of AttributeDefinition, or a hash with
+  #   the following arguments which are all optional unless marked
+  #   otherwise:
+  #   [type (*required*)]
+  #     The type of the attributes. One of the keys of
+  #     ATTRIBUTE_TYPE_CONVERSIONS.
   #   [minimum]
-  #     Used together with +type+ set to +number+. Minimum value.
+  #     Used together with +type+ set to +number+ or +float+. Minimum value.
+  #     Use -Float::INFINITY (the default) to denote no minimum.
   #   [maximum]
-  #     Used together with +type+ set to +number+. Maximum value.
+  #     Used together with +type+ set to +number+ or +float+. Maximum value.
+  #     Use Float::INFINITY (the default) to denote no maximum.
   #   [choices]
   #     Used together with +type+ set to +ident+. An array of
   #     symbols denoting the allowed identifiers for this attribute.
+  #     If empty (the default), no restrictions are applied to the attribute
+  #     value.
   # == Raises
   # [DuplicateAttribute]
   #   If you try to define an attribute more than once.
   # == Rermarks
   # * The already existing entries will have this attribute
   #   set to +nil+.
-  def define_attribute(name, type, desc, other = {})
+  def define_attribute(name, other)
     raise(DuplicateAttribute.new(name)) if valid_attribute?(name)
-    raise(ArgumentError, "Unknown type #{type.inspect}") unless ATTRIBUTE_TYPE_CONVERSIONS.has_key?(type)
 
-    definition = AttributeDefinition.new(type, desc)
-    other.each_pair{|k, v| definition[k] = v}
+    if other.kind_of?(AttributeDefinition)
+      definition = other.dup
+    else
+      definition = AttributeDefinition.new
+      other.each_pair{|k, v| definition[k] = v}
+    end
+
+    raise(ArgumentError, "No :type given!") unless definition.type
+    raise(ArgumentError, "Unknown type #{type.inspect}") unless ATTRIBUTE_TYPE_CONVERSIONS.has_key?(definition.type)
+
     @allowed_attributes[name] = definition
-
     @entries.each do |entry|
       entry[name] = nil
     end

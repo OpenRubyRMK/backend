@@ -14,9 +14,9 @@ class CategoryTest < Test::Unit::TestCase
 
   def test_creation_with_block_parameter
     cat = Category.new("stuff") do |c|
-      c.define_attribute :name, :string, "The name"
-      c.define_attribute :type, :ident, "The type"
-      c.define_attribute :damage, :float, "The damage"
+      c.define_attribute :name, type: :string, description: "The name"
+      c.define_attribute :type, type: :ident, description: "The type"
+      c.define_attribute :damage, type: :float, description: "The damage"
     end
 
     assert_equal("stuff", cat.name)
@@ -27,9 +27,9 @@ class CategoryTest < Test::Unit::TestCase
 
   def test_from_and_to_xml
     items = Category.new("items")
-    items.define_attribute :name, :string, "The name"
-    items.define_attribute :type, :ident, "The type", :choices => [:ice, :earth, :fire]
-    items.define_attribute :grade_of_nonsense, :number, "?!", :minimum => 10, :maximum => 20
+    items.define_attribute :name, type: :string, description: "The name"
+    items.define_attribute :type, type: :ident, description: "The type", choices: [:ice, :earth, :fire]
+    items.define_attribute :grade_of_nonsense, type: :number, description: "?!", minimum: 10, maximum: 20
 
     item = Category::Entry.new
     item[:name] = "Cool thing"
@@ -70,8 +70,8 @@ class CategoryTest < Test::Unit::TestCase
 
   def test_add_and_remove_attributes
     cat = Category.new("stuff")
-    cat.define_attribute :name, :string, "The name of the thing"
-    cat.define_attribute :usability, :ident, "How to use it"
+    cat.define_attribute :name, type: :string, description: "The name of the thing"
+    cat.define_attribute :usability, type: :ident, description: "How to use it"
 
     assert_equal(2, cat.allowed_attributes.count)
     assert_includes(cat.allowed_attributes, :name)
@@ -81,7 +81,7 @@ class CategoryTest < Test::Unit::TestCase
     item[:name] = "Foo"
     item[:usability] = :bar
     cat << item
-    cat.define_attribute :grade_of_nonsense, :float, "What?!"
+    cat.define_attribute :grade_of_nonsense, type: :float, description: "What?!"
     assert_nil(item[:grade_of_nonsense])
 
     item = Category::Entry.new
@@ -97,9 +97,9 @@ class CategoryTest < Test::Unit::TestCase
 
   def test_attribute_details
     cat = Category.new("stuff")
-    cat.define_attribute :name, :string, "The name of the thing"
-    cat.define_attribute :type, :ident, "The type of the thing"
-    cat.define_attribute :importance, :float, "The importance"
+    cat.define_attribute :name, type: :string, description: "The name of the thing"
+    cat.define_attribute :type, type: :ident, description: "The type of the thing"
+    cat.define_attribute :importance, type: :float, description: "The importance"
 
     assert_equal :string, cat.allowed_attributes[:name].type
     assert_equal :ident, cat.allowed_attributes[:type].type
@@ -112,8 +112,8 @@ class CategoryTest < Test::Unit::TestCase
 
   def test_entries
     cat = Category.new("stuff")
-    cat.define_attribute :foo, :string, "Foo stuff"
-    cat.define_attribute :bar, :ident, "Bar stuff"
+    cat.define_attribute :foo, type: :string, description: "Foo stuff"
+    cat.define_attribute :bar, type: :ident, description: "Bar stuff"
 
     entry = Category::Entry.new
     entry[:foo] = "Bar"
@@ -132,7 +132,7 @@ class CategoryTest < Test::Unit::TestCase
     # happened, i.e. the entry has no information that
     # we have a new attribute yet. It has to consult the
     # Category object again.
-    cat.define_attribute :baz, :string, "Baz stuff"
+    cat.define_attribute :baz, type: :string, description: "Baz stuff"
     assert_nothing_raised(OpenRubyRMK::Backend::Errors::UnknownAttribute){entry[:baz] = "foobar"}
     assert_equal("foobar", entry[:baz])
 
@@ -152,10 +152,10 @@ class CategoryTest < Test::Unit::TestCase
 
   def test_move_entries
     cat1 = Category.new("stuff")
-    cat1.define_attribute :foo, :string, "Foo stuff"
+    cat1.define_attribute :foo, type: :string, description: "Foo stuff"
 
     cat2 = Category.new("stuff")
-    cat2.define_attribute :bar, :string, "Bar stuff"
+    cat2.define_attribute :bar, type: :string, description: "Bar stuff"
 
     entry = Category::Entry.new
     entry[:foo] = "Bar"
@@ -187,8 +187,8 @@ class CategoryTest < Test::Unit::TestCase
     cat = Category.new("stuff")
     assert_empty cat.attribute_names
 
-    cat.define_attribute :foo, :ident, "Foo"
-    cat.define_attribute :bar, :number, "Bar"
+    cat.define_attribute :foo, type: :ident, description: "Foo"
+    cat.define_attribute :bar, type: :number, description: "Bar"
 
     assert_includes cat.attribute_names, :foo
     assert_includes cat.attribute_names, :bar
@@ -202,8 +202,8 @@ class CategoryTest < Test::Unit::TestCase
 
   def test_minimum_and_maximum
     cat = Category.new("stuff")
-    cat.define_attribute :foo, :number, "Foo", :minimum => 0, :maximum => 100
-    cat.define_attribute :bar, :float, "Bar", :minimum => -3.2, :maximum => 2.6
+    cat.define_attribute :foo, type: :number, description: "Foo", minimum: 0, maximum: 100
+    cat.define_attribute :bar, type: :float, description: "Bar", minimum: -3.2, maximum: 2.6
 
     assert_raises(Errors::InvalidEntry){cat << {:foo => -50, :bar => 0}}
     assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => 5000, :bar => 0)}
@@ -212,14 +212,14 @@ class CategoryTest < Test::Unit::TestCase
 
     # Tests the defaults of :minimum and :maximum which should allow
     # arbitrary numbers with no limitations.
-    cat.define_attribute :baz, :number, "Baz"
+    cat.define_attribute :baz, type: :number, description: "Baz"
     cat << Category::Entry.new(:foo => 50, :bar => 1.2, :baz => 9)
   end
 
   def test_choices
     cat = Category.new("stuff")
-    cat.define_attribute :foo, :ident, "Foo", :choices => [:aa, :ab]
-    cat.define_attribute :bar, :ident, "Bar"
+    cat.define_attribute :foo, type: :ident, description: "Foo", choices: [:aa, :ab]
+    cat.define_attribute :bar, type: :ident, description: "Bar"
 
     assert_raises(Errors::InvalidEntry){cat << {:foo => :bb}}
     assert_raises(Errors::InvalidEntry){cat << Category::Entry.new(:foo => :bb)}

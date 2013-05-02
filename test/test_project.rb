@@ -102,7 +102,7 @@ class ProjectTest < Test::Unit::TestCase
     pr = Project.new(@tmpdir)
     pr.categories.clear # Delete predefined categories
     cat = Category.new("Items")
-    cat.define_attribute :name, :string, "The name"
+    cat.define_attribute :name, type: :string, description: "The name"
     pr.add_category(cat)
     pr.save
 
@@ -165,7 +165,7 @@ class ProjectTest < Test::Unit::TestCase
     assert callback_fired, "Didn't issue :category_added event!"
     assert_includes pr.categories, items
 
-    items.define_attribute :name, :string, "The name"
+    items.define_attribute :name, type: :string, description: "The name"
     assert_includes pr.categories, items
 
     skills = Category.new("Skills")
