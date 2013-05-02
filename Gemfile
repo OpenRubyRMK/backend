@@ -1,5 +1,5 @@
 # -*- ruby -*-
-source "http://rubygems.org"
+source "https://rubygems.org"
 
 gem "ruby-tmx", :git => "git://github.com/Hanmac/tmx-ruby.git"
 gem "nokogiri"
@@ -9,5 +9,4 @@ group :development do
   gem "turn"
   gem "rake"
   gem "rdoc"
-  gem "emerald"
 end

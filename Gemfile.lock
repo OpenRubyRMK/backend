@@ -7,12 +7,9 @@ GIT
       rbtree
 
 GEM
-  remote: http://rubygems.org/
+  remote: https://rubygems.org/
   specs:
     ansi (1.4.3)
-    emerald (0.0.1.alpha5)
-      rdoc (>= 4.0.0)
-      sass (>= 3.2.0)
     json (1.7.7)
     nokogiri (1.5.9)
     paint (0.8.6)
@@ -20,7 +17,6 @@ GEM
     rbtree (0.4.1)
     rdoc (4.0.1)
       json (~> 1.4)
-    sass (3.2.8)
     turn (0.9.6)
       ansi
 
@@ -28,7 +24,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  emerald
   nokogiri
   paint
   rake
