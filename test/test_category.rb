@@ -30,11 +30,13 @@ class CategoryTest < Test::Unit::TestCase
     items.define_attribute :name, type: :string, description: "The name"
     items.define_attribute :type, type: :ident, description: "The type", choices: [:ice, :earth, :fire]
     items.define_attribute :grade_of_nonsense, type: :number, description: "?!", minimum: 10, maximum: 20
+    items.define_attribute :various, type: :hash, description: "Anything else"
 
     item = Category::Entry.new
     item[:name] = "Cool thing"
     item[:type] = :ice
     item[:grade_of_nonsense] = 12
+    item[:various] = {:recursive => {:hash => 33}, :foo => "foo"}
     items << item
 
     item = { :name => "Hot thing",
@@ -53,6 +55,7 @@ class CategoryTest < Test::Unit::TestCase
       assert_includes(items.allowed_attributes.keys, :name)
       assert_includes(items.allowed_attributes.keys, :type)
       assert_includes(items.allowed_attributes.keys, :grade_of_nonsense)
+      assert_includes(items.allowed_attributes.keys, :various)
 
       assert_equal(10, items.allowed_attributes[:grade_of_nonsense].minimum)
       assert_equal(20, items.allowed_attributes[:grade_of_nonsense].maximum)
@@ -61,6 +64,14 @@ class CategoryTest < Test::Unit::TestCase
       assert_includes(items.allowed_attributes[:type].choices, :fire)
       assert_equal(:string, items.allowed_attributes[:name].type)
       assert_equal(:ident, items.allowed_attributes[:type].type)
+      assert_equal(:number, items.allowed_attributes[:grade_of_nonsense].type)
+
+      assert_equal(:hash, items.allowed_attributes[:various].type)
+      assert_includes(items.entries.first[:various].keys, :recursive)
+      assert_includes(items.entries.first[:various].keys, :foo)
+      assert_includes(items.entries.first[:various][:recursive].keys, :hash)
+      assert_equal("foo", items.entries.first[:various][:foo])
+      assert_equal(33, items.entries.first[:various][:recursive][:hash])
 
       assert_equal("Cool thing", items.entries.first[:name])
       assert_equal(:fire, items.entries.last[:type]) # Note this has done type conversion from the XML-stored string!
@@ -100,14 +111,17 @@ class CategoryTest < Test::Unit::TestCase
     cat.define_attribute :name, type: :string, description: "The name of the thing"
     cat.define_attribute :type, type: :ident, description: "The type of the thing"
     cat.define_attribute :importance, type: :float, description: "The importance"
+    cat.define_attribute :various, type: :hash, description: "Anything else"
 
     assert_equal :string, cat.allowed_attributes[:name].type
     assert_equal :ident, cat.allowed_attributes[:type].type
     assert_equal :float, cat.allowed_attributes[:importance].type
+    assert_equal :hash, cat.allowed_attributes[:various].type
 
     assert_equal "The name of the thing", cat.allowed_attributes[:name].description
     assert_equal "The type of the thing", cat.allowed_attributes[:type].description
     assert_equal "The importance", cat.allowed_attributes[:importance].description
+    assert_equal "Anything else", cat.allowed_attributes[:various].description
   end
 
   def test_entries

@@ -4,6 +4,7 @@ require "observer"
 require "set"
 require "pathname"
 require "yaml"
+require "json"
 require "nokogiri"
 require "tiled_tmx"
 

@@ -105,10 +105,11 @@ class OpenRubyRMK::Backend::Category
   # type to a lambda which converts the string value
   # found in the XML to an actually useful Ruby type.
   ATTRIBUTE_TYPE_CONVERSIONS = {
-    :number => lambda{|str| str.to_i},
-    :float  => lambda{|str| str.to_f},
-    :ident  => lambda{|str| str.to_sym},
-    :string => lambda{|str| str} # No conversion at all
+    :number => {:from_xml => lambda{|str| str.to_i},   :to_xml => lambda{|num| num.to_s}},
+    :float  => {:from_xml => lambda{|str| str.to_f},   :to_xml => lambda{|flt| flt.to_s}},
+    :ident  => {:from_xml => lambda{|str| str.to_sym}, :to_xml => lambda{|sym| sym.to_s}},
+    :string => {:from_xml => lambda{|str| str},        :to_xml => lambda{|str| str}}, # No conversion at all
+    :hash   => {:from_xml => lambda{|str| JSON.parse(str).recursively_symbolize_keys}, :to_xml => lambda{|hsh| hsh.to_json}}
   }
 
   # This is a metadata object that holds information about
@@ -335,7 +336,7 @@ class OpenRubyRMK::Backend::Category
 
           # Add the attribute, converting the string stored in XML
           # to whatever the attribute’s type definition demands.
-          entry[name] = ATTRIBUTE_TYPE_CONVERSIONS[@allowed_attributes[name].type][attr_node.text]
+          entry[name] = ATTRIBUTE_TYPE_CONVERSIONS[@allowed_attributes[name].type][:from_xml][attr_node.text]
         end
 
         add_entry(entry)
@@ -593,7 +594,8 @@ class OpenRubyRMK::Backend::Category
           @entries.each do |entry|
             entries_node.entry do |entry_node|
               entry.each_attribute do |name, value|
-                entry_node.attribute(value, :name => name)
+                sanitized_value = ATTRIBUTE_TYPE_CONVERSIONS[get_definition(name).type][:to_xml][value]
+                entry_node.attribute(sanitized_value, :name => name)
               end #each
             end #</entry>
           end #each
