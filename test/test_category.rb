@@ -30,12 +30,14 @@ class CategoryTest < Test::Unit::TestCase
     items.define_attribute :name, type: :string, description: "The name"
     items.define_attribute :type, type: :ident, description: "The type", choices: [:ice, :earth, :fire]
     items.define_attribute :grade_of_nonsense, type: :number, description: "?!", minimum: 10, maximum: 20
+    items.define_attribute :another_float, type: :float, description: "A number"
     items.define_attribute :various, type: :hash, description: "Anything else"
 
     item = Category::Entry.new
     item[:name] = "Cool thing"
     item[:type] = :ice
     item[:grade_of_nonsense] = 12
+    item[:another_float] = 55
     item[:various] = {:recursive => {:hash => 33}, :foo => "foo"}
     items << item
 
@@ -55,6 +57,7 @@ class CategoryTest < Test::Unit::TestCase
       assert_includes(items.allowed_attributes.keys, :name)
       assert_includes(items.allowed_attributes.keys, :type)
       assert_includes(items.allowed_attributes.keys, :grade_of_nonsense)
+      assert_includes(items.allowed_attributes.keys, :another_float)
       assert_includes(items.allowed_attributes.keys, :various)
 
       assert_equal(10, items.allowed_attributes[:grade_of_nonsense].minimum)
@@ -65,6 +68,7 @@ class CategoryTest < Test::Unit::TestCase
       assert_equal(:string, items.allowed_attributes[:name].type)
       assert_equal(:ident, items.allowed_attributes[:type].type)
       assert_equal(:number, items.allowed_attributes[:grade_of_nonsense].type)
+      assert_equal(:float, items.allowed_attributes[:another_float].type)
 
       assert_equal(:hash, items.allowed_attributes[:various].type)
       assert_includes(items.entries.first[:various].keys, :recursive)
@@ -76,6 +80,9 @@ class CategoryTest < Test::Unit::TestCase
       assert_equal("Cool thing", items.entries.first[:name])
       assert_equal(:fire, items.entries.last[:type]) # Note this has done type conversion from the XML-stored string!
       assert_equal(12, items.entries.first[:grade_of_nonsense])
+
+      assert_equal Float::INFINITY, items.allowed_attributes[:another_float].maximum
+      assert_equal -Float::INFINITY, items.allowed_attributes[:another_float].minimum
     end
   end
 
