@@ -105,10 +105,10 @@ class OpenRubyRMK::Backend::Category
   # type to a lambda which converts the string value
   # found in the XML to an actually useful Ruby type.
   ATTRIBUTE_TYPE_CONVERSIONS = {
-    :number => {:from_xml => lambda{|str| str.to_i},   :to_xml => lambda{|num| num.to_s}},
-    :float  => {:from_xml => lambda{|str| str.to_f},   :to_xml => lambda{|flt| flt.to_s}},
-    :ident  => {:from_xml => lambda{|str| str.to_sym}, :to_xml => lambda{|sym| sym.to_s}},
-    :string => {:from_xml => lambda{|str| str},        :to_xml => lambda{|str| str}}, # No conversion at all
+    :number => {:from_xml => lambda{|str| Integer(str)}, :to_xml => lambda{|num| num.to_s}},
+    :float  => {:from_xml => lambda{|str| Float[str]},   :to_xml => lambda{|flt| flt.to_s}},
+    :ident  => {:from_xml => lambda{|str| str.to_sym},   :to_xml => lambda{|sym| sym.to_s}},
+    :string => {:from_xml => lambda{|str| str},          :to_xml => lambda{|str| str}}, # No conversion at all
     :hash   => {:from_xml => lambda{|str| JSON.parse(str).recursively_symbolize_keys}, :to_xml => lambda{|hsh| hsh.to_json}}
   }
 
@@ -309,8 +309,8 @@ class OpenRubyRMK::Backend::Category
         definition             = AttributeDefinition.new
         definition.type        = def_node.xpath("type").text.to_sym
         definition.description = def_node.xpath("description").text
-        definition.minimum     = def_node.xpath("minimum").text.to_i unless def_node.xpath("minimum").empty?
-        definition.maximum     = def_node.xpath("maximum").text.to_i unless def_node.xpath("maximum").empty?
+        definition.minimum     = Integer[def_node.xpath("minimum").text.strip] unless def_node.xpath("minimum").empty?
+        definition.maximum     = Integer[def_node.xpath("maximum").text.strip] unless def_node.xpath("maximum").empty?
         definition.choices     = def_node.xpath("choices").text.split(/,\s?/).map(&:to_sym) unless def_node.xpath("choices").empty?
 
         # The <type> node is required.
@@ -557,9 +557,9 @@ class OpenRubyRMK::Backend::Category
       if definition.type == :number || definition.type == :float
 
         if attr_value && attr_value < definition.minimum
-          raise(InvalidEntry.new(attr_name, "Value is below minimum: #{attr_value}"))
+          raise(InvalidEntry.new(attr_name, "Value is below minimum (#{definition.minimum}): #{attr_value}"))
         elsif attr_value && attr_value > definition.maximum
-          raise(InvalidEntry.new(attr_name, "Value is above maximum: #{attr_value}"))
+          raise(InvalidEntry.new(attr_name, "Value is above maximum (#{definition.maximum}): #{attr_value}"))
         end
 
       elsif definition.type == :ident
@@ -594,8 +594,14 @@ class OpenRubyRMK::Backend::Category
           @entries.each do |entry|
             entries_node.entry do |entry_node|
               entry.each_attribute do |name, value|
-                sanitized_value = ATTRIBUTE_TYPE_CONVERSIONS[get_definition(name).type][:to_xml][value]
-                entry_node.attribute(sanitized_value, :name => name)
+                type = get_definition(name).type
+
+                if ATTRIBUTE_TYPE_CONVERSIONS[type]
+                  sanitized_value = ATTRIBUTE_TYPE_CONVERSIONS[get_definition(name).type][:to_xml][value]
+                  entry_node.attribute(sanitized_value, :name => name)
+                else
+                  raise(OpenRubyRMK::Backend::Errors::InvalidEntry.new(entry, "Invalid attribute type `#{get_definition(name).type}' for attribute `#{name}'!"))
+                end
               end #each
             end #</entry>
           end #each
