@@ -302,7 +302,8 @@ class OpenRubyRMK::Backend::Map
     notify_observers :tileset_added, :gid => gid, :tileset => tileset
   end
 
-  # Adds a layer to this map.
+  # Adds a layer to this map. The layer is placed on top of all
+  # other layers.
   # == Parameters
   # [*args]
   #   Passed through to TiledTmx::Map#add_layer.
@@ -323,7 +324,7 @@ class OpenRubyRMK::Backend::Map
   def add_layer(*args)
     changed
 
-    layer = @tmx_map.add_layer(*args)
+    layer = @tmx_map.add_layer(*args) # ruby-tmx adds the layer on the top
     layer.compression ||= DEFAULT_LAYER_COMPRESSION
     layer.encoding    ||= DEFAULT_LAYER_ENCODING
 
