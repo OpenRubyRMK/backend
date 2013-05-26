@@ -325,8 +325,11 @@ class OpenRubyRMK::Backend::Map
     changed
 
     layer = @tmx_map.add_layer(*args) # ruby-tmx adds the layer on the top
-    layer.compression ||= DEFAULT_LAYER_COMPRESSION
-    layer.encoding    ||= DEFAULT_LAYER_ENCODING
+
+    if layer.kind_of?(TiledTmx::TileLayer)
+      layer.compression ||= DEFAULT_LAYER_COMPRESSION
+      layer.encoding    ||= DEFAULT_LAYER_ENCODING
+    end
 
     notify_observers :layer_added, :layer => layer
     layer
