@@ -41,6 +41,20 @@
 # #mount and #unmount is usually more clear as it resembles
 # the terminology generally known from Linux file system
 # operations (the +mount+ and +umount+ commands).
+#
+# == Objects on the map
+# Objects on the map are represented the default way ruby-tmx
+# does, i.e. by means of a TiledTmx::ObjectGroup layer that
+# contains any number of TiledTmx::Object instances. However,
+# to ease object editing for the user, we set up some conventions
+# on these quite liberate objects:
+#
+# 1. The +name+ attribute is set to a map-unique ID that allows
+#    to directly retrieve the object from the map (via #get_object).
+# 2. The +custom_name+ *property* (see TiledTmx::PropertySet) can
+#    be set to any name that is human-readable. #get_objects will
+#    return all objects on this map that have that name. By default,
+#    the +custom_name+ is generated from the ID.
 class OpenRubyRMK::Backend::Map < TiledTmx::Map
   include OpenRubyRMK::Backend::Eventable
 
@@ -77,11 +91,20 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     # Now initialize the rest of the object.
     map.instance_eval do
-      @id             = File.basename(path).to_s.to_i # Pathname<0001.map> -> "0001.map" -> 1
-      @children       = []
-      @parent         = nil
-      @events         = []
-      @event_id_mutex = Mutex.new
+      @id              = File.basename(path).to_s.to_i # Pathname<0001.map> -> "0001.map" -> 1
+      @children        = []
+      @parent          = nil
+      @object_id_mutex = Mutex.new
+
+      # Find the highest object ID on the entire map and
+      # set it as the start for the object ID generator to
+      # further ensure unique object IDs.
+      @last_object_id = layers.reduce(0) do |memo, layer|
+        next memo unless layer.kind_of?(TiledTmx::ObjectGroup)
+
+        obj = layer.objects.max_by{|obj| obj.name.to_i}
+        obj.name.to_i < memo ? memo : obj.name.to_i
+      end
     end
 
     map
@@ -132,7 +155,8 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
     @id       = Integer(arg)
     @children = []
     @parent   = nil
-    @events   = []
+    @last_object_id = 0
+    @object_id_mutex = Mutex.new
 
     # Set some default map values
     self.width       = DEFAULT_MAP_WIDTH
@@ -379,11 +403,73 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
     notify_observers :size_changed, :size => [width, height]
   end
 
-  def add_event(event)
-    raise NotImplementedError, "FIXME"
-#    changed
-#    @events << event
-#    notify_observers :event_added, :event => event
+  # Add a TMX ObjectGroup object to the map. This method adds the
+  # required unique ID to the +object+, and generates a default
+  # +custom_name+ property from that ID. If you set the +name+
+  # attribute on the object, no ID will be generated; if you
+  # set the +custom_name+ property, no name will be generated.
+  # == Parameters
+  # [layer_num]
+  #   The Z index of the layer to add the object to.
+  # [object]
+  #   The TiledTmx::Object to add to the layer.
+  # == Raises
+  # [ArgumentError]
+  #   If the given layer number does not correspond to an ObjectGroup.
+  # == Events
+  # [object_added]
+  #   Always emmitted when calling this method. The callback receives
+  #   a :layer and an :object parameter representing the respective things.
+  def add_object(layer_num, object)
+    layer = get_layer(layer_num)
+    raise(ArgumentError, "Layer ##{layer_num} is not an ObjectGroup") unless layer.kind_of?(TiledTmx::ObjectGroup)
+
+    changed
+    object.name ||= generate_object_id.to_s
+    object.properties["custom_name"] ||= sprintf("Event-#{format_object_id(object.id)}")
+
+    layer.objects << object
+    notify_observers :event_added, :layer => layer, :object => object
+  end
+
+  # Request the object with the given +id+.
+  # == Parameters
+  # [id]
+  #   The map-unique ID of the object you want to retrieve.
+  # == Return value
+  # A TiledTmx::Object instance, if the ID is found, +nil+
+  # otherwise.
+  def get_object(id)
+    idstr = id.to_s # The object name is always a string
+
+    each_layer(TiledTmx::ObjectGroup) do |layer|
+      layer.objects.each do |object|
+        return object if object.name == idstr
+      end
+    end
+
+    nil
+  end
+
+  # Request all objects that have been assigned the given +custom_name+
+  # property.
+  # == Parameters
+  # [custom_name]
+  #   The value of the +custom_name+ *property* (see TiledTmx::PropertySet)
+  #   you’re looking for.
+  # == Return value
+  # An array of all objects matching the given +custom_name+. If none
+  # matches, the array is empty.
+  def get_objects(custom_name)
+    result = []
+
+    each_layer(TiledTmx::ObjectGroup) do |layer|
+      layer.objects.each do |object|
+        result << object if object.properties["custom_name"] == custom_name
+      end
+    end
+
+    result
   end
 
   #call-seq:
@@ -420,11 +506,16 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
   # Generate a new and unique (as per this map) ID. Used
   # by MapEvent#initialize.
-  def generate_event_id # :nodoc:
-    @__last_event_id ||= 0
-    @event_id_mutex.synchronize do
-      @__last_event_id += 1
+  def generate_object_id # :nodoc:
+    @object_id_mutex.synchronize do
+      @last_object_id += 1
     end
+  end
+
+  # Format the given object ID the way it should be
+  # presented to the user and is used for name generation.
+  def format_object_id(id) # :nodoc:
+    sprintf("0x%08x", id)
   end
 
 end
