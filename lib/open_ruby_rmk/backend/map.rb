@@ -41,11 +41,7 @@
 # #mount and #unmount is usually more clear as it resembles
 # the terminology generally known from Linux file system
 # operations (the +mount+ and +umount+ commands).
-#
-# --
-# FIXME: Make this a subclass of TiledTmx::Map.
-# ++
-class OpenRubyRMK::Backend::Map
+class OpenRubyRMK::Backend::Map < TiledTmx::Map
   include OpenRubyRMK::Backend::Eventable
 
   # Number of tile columns to use for new maps.
@@ -68,13 +64,27 @@ class OpenRubyRMK::Backend::Map
   # The parent map or +nil+ if this is a root map.
   attr_reader :parent
 
-  # The underlying TiledTmx::Map object.
-  attr_reader :tmx_map
-
   # Returns the filename a map with ID +id+ is expected
   # to reside in.
   def self.format_filename(id)
     sprintf("%04d.tmx", id)
+  end
+
+  def self.load_xml(path)
+    # Initialize the tmx part of the object (see also the explanation
+    # in #initialize further below).
+    map = super
+
+    # Now initialize the rest of the object.
+    map.instance_eval do
+      @id             = File.basename(path).to_s.to_i # Pathname<0001.map> -> "0001.map" -> 1
+      @children       = []
+      @parent         = nil
+      @events         = []
+      @event_id_mutex = Mutex.new
+    end
+
+    map
   end
 
   # Load a map from a given path. Note that the loaded map
@@ -84,38 +94,54 @@ class OpenRubyRMK::Backend::Map
   # this method internally, so calling from_file directly
   # is not recommended.
   def self.from_file(path)
-    map = allocate
-    map.instance_eval do
-      @id        = File.basename(path).to_s.to_i # Pathname<0001.map> -> "0001.map" -> 1
-      @children  = []
-      @parent    = nil
-      @tmx_map   = TiledTmx::Map.load_xml(path)
-    end
-
-    map
+    load_xml(path)
   end
 
+  # call-seq:
+  #   new(id) → a_map
+  #
   # Create a new map.
-  # == Parameters
-  # [id] The ID to assign to this map.
+  # [id]
+  #   The ID to assign to this map. If set to anything
+  #   else than an integer, this method directly delegates
+  #   to TiledTmx::Map.new without doing anything else (do
+  #   not make use of that possibility, it’s a compatibility hack).
   # == Remarks
   # The map is created with the default map size
   # (see DEFAULT_MAP_WIDTH and DEFAULT_MAP_HEIGHT)
   # and one empty tile layer.
-  def initialize(id)
-    @id       = Integer(id)
-    @tmx_map  = TiledTmx::Map.new
+  def initialize(arg)
+    # This is a bit nasty. ruby-tmx calls ::new from the
+    # TiledTmx::Map::load_xml, with a hash as the only argument (also
+    # using Ruby’s syntactic sugar for hash arguments). This makes it
+    # impossible for us to change the method signature for
+    # #initialize, hence the evil #kind_of? check below. This however
+    # leaves us with an incomplete object (only the tmx part being
+    # initialized), because we immediately +return+ as seen below (to
+    # not get in the way of ruby-tmx’ initialisation process). To
+    # ensure proper working, we therefore also overwrite the
+    # ::load_xml method to initialize the rest of the object
+    # correctly.
+
+    if arg.kind_of?(Integer)
+      super()
+    else
+      return super(arg)
+    end
+
+    @id       = Integer(arg)
     @children = []
     @parent   = nil
+    @events   = []
 
     # Set some default map values
-    @tmx_map.width       = DEFAULT_MAP_WIDTH
-    @tmx_map.height      = DEFAULT_MAP_HEIGHT
-    @tmx_map.orientation = :orthogonal
-    @tmx_map.tilewidth   = DEFAULT_TILE_EDGE
-    @tmx_map.tileheight  = DEFAULT_TILE_EDGE
+    self.width       = DEFAULT_MAP_WIDTH
+    self.height      = DEFAULT_MAP_HEIGHT
+    self.orientation = :orthogonal
+    self.tilewidth   = DEFAULT_TILE_EDGE
+    self.tileheight  = DEFAULT_TILE_EDGE
 
-    layer             = @tmx_map.add_layer(:layer, :name => "Ground") # FIXME: When ruby-tmx supports :tile, use that for clarity
+    layer             = add_layer(:tile, :name => "Ground")
     layer.compression = DEFAULT_LAYER_COMPRESSION
     layer.encoding    = DEFAULT_LAYER_ENCODING
 
@@ -131,7 +157,7 @@ class OpenRubyRMK::Backend::Map
   # The property’s value; note this always is a string,
   # because XML doesn’t know about other data types.
   def [](name)
-    @tmx_map.properties[name.to_s]
+    properties[name.to_s]
   end
 
   # Set an extra property on the map.
@@ -149,7 +175,7 @@ class OpenRubyRMK::Backend::Map
   #   the changed property (both are strings).
   def []=(name, value)
     changed
-    @tmx_map.properties[name.to_s] = value.to_s
+    properties[name.to_s] = value.to_s
     notify_observers(:property_changed, :property => name.to_s, :new_value => value.to_s)
   end
 
@@ -283,20 +309,14 @@ class OpenRubyRMK::Backend::Map
   #   callback receives a :tileset parameter with
   #   the given +tileset+ object, and a :gid parameter
   #   with the GID used for this tileset on this map.
-  # == Remarks
-  # Question: Why can’t I add the tileset directly
-  # to #tmx_map?
-  #
-  # Answer: No +tileset_added+ event would be emitted,
-  # possible breaking UIs.
   def add_tileset(tileset, gid = nil)
     changed
 
     if gid
-      @tmx_map.add_tileset(tileset, gid)
+      super(tileset, gid)
     else
-      gid = @tmx_map.next_first_gid # FIXME: TiledTmx::Map#add_tileset should return the GID in a future version of ruby-tmx when using an optional parameter
-      @tmx_map.add_tileset(tileset, gid)
+      gid = next_first_gid # FIXME: TiledTmx::Map#add_tileset should return the GID in a future version of ruby-tmx when using an optional parameter
+      super(tileset, gid)
     end
 
     notify_observers :tileset_added, :gid => gid, :tileset => tileset
@@ -315,16 +335,10 @@ class OpenRubyRMK::Backend::Map
   #   Always emitted when this method is called. The callback
   #   receives a :layer argument with a TiledTmx::Layer subclass
   #   instance as an attribute.
-  # == Remarks
-  # Question: Why can’t I add my layers directly to #tmx_map?
-  #
-  # Answer: Because this wouldn’t emit the :layer_added event,
-  # not notifying listeners on this map and probably leading
-  # to obscure errors.
   def add_layer(*args)
     changed
 
-    layer = @tmx_map.add_layer(*args) # ruby-tmx adds the layer on the top
+    layer = super # ruby-tmx adds the layer on the top
 
     if layer.kind_of?(TiledTmx::TileLayer)
       layer.compression ||= DEFAULT_LAYER_COMPRESSION
@@ -344,14 +358,10 @@ class OpenRubyRMK::Backend::Map
   #   Always emitted when calling this method. The callback
   #   receives a :size parameter width an array containing
   #   the new [width, height].
-  # == Remarks
-  # Question: Why can’t I set this directly on the #tmx_map?
-  #
-  # Answer: Because this wouldn’t emit the :size_changed event.
   def width=(num)
     changed
-    @tmx_map.width = num
-    notify_observers :size_changed, :size => [@tmx_map.width, @tmx_map.height]
+    super
+    notify_observers :size_changed, :size => [width, height]
   end
 
   # Set the map’s height in tiles.
@@ -363,28 +373,17 @@ class OpenRubyRMK::Backend::Map
   #   Always emitted when calling this method. The callback
   #   receives a :size parameter width an array containing
   #   the new [width, height].
-  # == Remarks
-  # Question: Why can’t I set this directly on the #tmx_map?
-  #
-  # Answer: Because this wouldn’t emit the :size_changed event.
   def height=(num)
     changed
-    @tmx_map.height = num
-    notify_observers :size_changed, :size => [@tmx_map.width, @tmx_map.height]
+    super
+    notify_observers :size_changed, :size => [width, height]
   end
 
-  # The map’s number of logical columns. Same as:
-  #   map.tmx_map.width
-  # This method mainly exists for symmetry with #width=.
-  def width
-    @tmx_map.width
-  end
-
-  # The map’s number of logical rows. Same as:
-  #   map.tmx_map.height
-  # This method mainly exists for symmetry with #height=.
-  def height
-    @tmx_map.height
+  def add_event(event)
+    raise NotImplementedError, "FIXME"
+#    changed
+#    @events << event
+#    notify_observers :event_added, :event => event
   end
 
   #call-seq:
@@ -416,7 +415,16 @@ class OpenRubyRMK::Backend::Map
   # calls this method if you worried about that).
   def save(maps_dir)
     target = File.join(maps_dir, self.class.format_filename(@id))
-    File.open(target, "w"){|f| f.write(@tmx_map.to_xml(target))}
+    File.open(target, "w"){|f| f.write(to_xml(target))}
+  end
+
+  # Generate a new and unique (as per this map) ID. Used
+  # by MapEvent#initialize.
+  def generate_event_id # :nodoc:
+    @__last_event_id ||= 0
+    @event_id_mutex.synchronize do
+      @__last_event_id += 1
+    end
   end
 
 end

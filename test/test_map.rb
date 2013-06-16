@@ -23,17 +23,17 @@ class MapTest < Test::Unit::TestCase
   def test_map_creation
     assert_empty(@map.children)
     assert_nil(@map.parent)
+    assert_kind_of(TiledTmx::Map, @map)
     assert("Map_0001", @map[:name])
-    assert(@map.tmx_map, "Didn't assign a TMX map to a new map")
-    assert_equal(Map::DEFAULT_MAP_WIDTH, @map.tmx_map.width)
-    assert_equal(Map::DEFAULT_MAP_HEIGHT, @map.tmx_map.height)
-    assert_equal(Map::DEFAULT_TILE_EDGE, @map.tmx_map.tilewidth)
-    assert_equal(Map::DEFAULT_TILE_EDGE, @map.tmx_map.tileheight)
-    assert_equal(1, @map.tmx_map.layers.count)
+    assert_equal(Map::DEFAULT_MAP_WIDTH, @map.width)
+    assert_equal(Map::DEFAULT_MAP_HEIGHT, @map.height)
+    assert_equal(Map::DEFAULT_TILE_EDGE, @map.tilewidth)
+    assert_equal(Map::DEFAULT_TILE_EDGE, @map.tileheight)
+    assert_equal(1, @map.layers.count)
     assert_equal(Map::DEFAULT_MAP_WIDTH * Map::DEFAULT_MAP_HEIGHT,
-                 @map.tmx_map.get_layer(-1).map.width * @map.tmx_map.get_layer(-1).map.height)
-    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.tmx_map.get_layer(-1).compression)
-    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.tmx_map.get_layer(-1).encoding)
+                 @map.get_layer(-1).map.width * @map.get_layer(-1).map.height)
+    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.get_layer(-1).compression)
+    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.get_layer(-1).encoding)
     assert(@map.root?, "Didn't reconise a map without a parent as a root map.")
   end
 
@@ -137,7 +137,7 @@ class MapTest < Test::Unit::TestCase
     tileset = TiledTmx::Tileset.load_xml(fixture("resources/gimp.tsx")) # 144 tiles
     event_emitted = false
 
-    assert_equal(1, @map.tmx_map.next_first_gid)
+    assert_equal(1, @map.next_first_gid)
     @map.observe(:tileset_added) do |event, sender, hsh|
       unless event_emitted # Only for the first adding, see below
         assert_equal(tileset, hsh[:tileset])
@@ -149,17 +149,17 @@ class MapTest < Test::Unit::TestCase
     @map.add_tileset(tileset)
 
     assert(event_emitted, "No tileset addition event was issued")
-    assert_equal(145, @map.tmx_map.next_first_gid) # 144 tiles
-    assert_equal(1, @map.tmx_map.tilesets.count)
-    assert_equal(1, @map.tmx_map.each_tileset_key.first)
-    assert_equal(tileset, @map.tmx_map.each_tileset.first[1])
+    assert_equal(145, @map.next_first_gid) # 144 tiles
+    assert_equal(1, @map.tilesets.count)
+    assert_equal(1, @map.each_tileset_key.first)
+    assert_equal(tileset, @map.each_tileset.first[1])
 
     @map.add_tileset(tileset)
-    assert_equal(289, @map.tmx_map.next_first_gid)
+    assert_equal(289, @map.next_first_gid)
   end
 
   def test_adding_layers
-    assert_equal(1, @map.tmx_map.layers.count)
+    assert_equal(1, @map.layers.count)
 
     event_fired = false
     @map.observe(:layer_added) do |event, sender, info|
@@ -169,43 +169,43 @@ class MapTest < Test::Unit::TestCase
 
     @map.add_layer(:tile, :name => "A new layer")
     assert(event_fired, "No layer addition event was issued")
-    assert_equal(2, @map.tmx_map.layers.count)
-    assert_equal("A new layer", @map.tmx_map.get_layer(-1).name)
-    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.tmx_map.get_layer(-1).compression)
-    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.tmx_map.get_layer(-1).encoding)
+    assert_equal(2, @map.layers.count)
+    assert_equal("A new layer", @map.get_layer(-1).name)
+    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.get_layer(-1).compression)
+    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.get_layer(-1).encoding)
 
     event_fired = false
-    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "Another layer")
+    layer = TiledTmx::TileLayer.new(@map, :name => "Another layer")
     @map.add_layer(layer)
     assert(event_fired, "No layer addition event was issued")
-    assert_equal(3, @map.tmx_map.layers.count)
-    assert_equal("Another layer", @map.tmx_map.get_layer(-1).name)
-    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.tmx_map.get_layer(-1).compression)
-    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.tmx_map.get_layer(-1).encoding)
-    assert_equal(layer, @map.tmx_map.get_layer(-1))
+    assert_equal(3, @map.layers.count)
+    assert_equal("Another layer", @map.get_layer(-1).name)
+    assert_equal(Map::DEFAULT_LAYER_COMPRESSION, @map.get_layer(-1).compression)
+    assert_equal(Map::DEFAULT_LAYER_ENCODING, @map.get_layer(-1).encoding)
+    assert_equal(layer, @map.get_layer(-1))
 
     event_fired = false
-    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "A layer with custom compression")
+    layer = TiledTmx::TileLayer.new(@map, :name => "A layer with custom compression")
     layer.compression = "gzip"
     @map.add_layer(layer)
     assert(event_fired, "No layer addition event was issued")
-    assert_equal("gzip", @map.tmx_map.get_layer(-1).compression)
+    assert_equal("gzip", @map.get_layer(-1).compression)
 
     event_fired = false
-    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "A layer with custom encoding")
+    layer = TiledTmx::TileLayer.new(@map, :name => "A layer with custom encoding")
     layer.encoding = "csv"
     @map.add_layer(layer)
     assert(event_fired, "No layer addition event was issued")
-    assert_equal("csv", @map.tmx_map.get_layer(-1).encoding)
+    assert_equal("csv", @map.get_layer(-1).encoding)
 
     event_fired = false
-    layer = TiledTmx::TileLayer.new(@map.tmx_map, :name => "A layer with custom compression and encoding")
+    layer = TiledTmx::TileLayer.new(@map, :name => "A layer with custom compression and encoding")
     layer.compression = "gzip"
     layer.encoding = "csv"
     @map.add_layer(layer)
     assert(event_fired, "No layer addition event was issued")
-    assert_equal("gzip", @map.tmx_map.get_layer(-1).compression)
-    assert_equal("csv", @map.tmx_map.get_layer(-1).encoding)
+    assert_equal("gzip", @map.get_layer(-1).compression)
+    assert_equal("csv", @map.get_layer(-1).encoding)
   end
 
   def test_saving
@@ -223,9 +223,6 @@ class MapTest < Test::Unit::TestCase
   end
 
   def test_width_and_height
-    assert_equal(@map.tmx_map.width, @map.width)
-    assert_equal(@map.tmx_map.height, @map.height)
-
     event_fired = false
     @map.observe(:size_changed) do |event, sender, info|
       event_fired = true
@@ -234,13 +231,11 @@ class MapTest < Test::Unit::TestCase
     @map.width = 100
     assert event_fired, "No :size_changed event was fired"
     assert_equal(100, @map.width)
-    assert_equal(100, @map.tmx_map.width)
 
     event_fired = false
     @map.height = 123
     assert event_fired, "No :size_changed event was issued"
     assert_equal(123, @map.height)
-    assert_equal(123, @map.tmx_map.height)
   end
 
 end
