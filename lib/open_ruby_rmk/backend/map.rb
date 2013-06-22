@@ -415,7 +415,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
   # [layer_num]
   #   The Z index of the layer to add the object to.
   # [object]
-  #   The TiledTmx::Object to add to the layer.
+  #   The MapObject to add to the layer.
   # == Raises
   # [ArgumentError]
   #   If the given layer number does not correspond to an ObjectGroup.
@@ -447,7 +447,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     each_layer(TiledTmx::ObjectGroup) do |layer|
       layer.objects.each do |object|
-        return object if object.name == idstr
+        return MapObject.from_tmx_object(object) if object.name == idstr
       end
     end
 
@@ -468,7 +468,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     each_layer(TiledTmx::ObjectGroup) do |layer|
       layer.objects.each do |object|
-        result << object if object.properties["custom_name"] == custom_name
+        result << MapObject.from_tmx_object(object) if object.properties["custom_name"] == custom_name
       end
     end
 
