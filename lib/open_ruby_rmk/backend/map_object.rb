@@ -257,9 +257,9 @@ class OpenRubyRMK::Backend::MapObject
     templated!
 
     page_params.each_with_index do |params, index|
-      current_params = JSON.parse(@tmx_object.properties["templateparams-#{index}"])
+      current_params = JSON.parse(@tmx_object.properties["templateparams-#{index}"]) # FIXME: This should be nested XML, but the TMX format doesn’t allow this
       current_params.update(params)
-      @tmx_object.properties["templateparams-#{index}"] = current_params.to_json
+      @tmx_object.properties["templateparams-#{index}"] = current_params.to_json # FIXME: This should be nested XML, but the TMX format doesn’t allow this
     end
   end
 
