@@ -55,6 +55,9 @@
 #    be set to any name that is human-readable. #get_objects will
 #    return all objects on this map that have that name. By default,
 #    the +custom_name+ is generated from the ID.
+#
+# If you use the #add_object method, these will automatically be
+# taken care of for you.
 class OpenRubyRMK::Backend::Map < TiledTmx::Map
   include OpenRubyRMK::Backend::Eventable
 

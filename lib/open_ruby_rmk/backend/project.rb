@@ -40,6 +40,9 @@ class OpenRubyRMK::Backend::Project
   # The categories of a project. Don’t work on this directly,
   # use #add_category and #remove_category.
   attr_reader :categories
+  # The event templates of a project. Don’t work on this directly,
+  # use #add_template and #remove_template.
+  attr_reader :templates
 
   # Loads an OpenRubyRMK project from a project file and it’s
   # associated directory.
@@ -148,6 +151,48 @@ class OpenRubyRMK::Backend::Project
     changed
     @root_maps.delete(map)
     notify_observers(:root_map_removed, :map => map)
+  end
+
+  # Adds the a Template instance to the list of templates for this
+  # project.
+  # == Parameter
+  # [template]
+  #   The Template to add to the project.
+  # == Events
+  # [template_added]
+  #   Only issued if +template+ is really added to the project.
+  #   The callback receives +template+ as :template.
+  # == Remarks
+  # If +template+ is already part of the project, does nothing.
+  def add_template(template)
+    return if @templates.include?(template)
+
+    changed
+    @templates << template
+    notify_observers(:template_added, :template => template)
+  end
+
+  # Removes a Template from the project.
+  # == Parameter
+  # [cat]
+  #   The Template instance to remove. May also be a string,
+  #   in which case the first template with this string as
+  #   its +name+ is removed.
+  # == Events
+  # [template_removed]
+  #   Only issued if a template was really removed from the
+  #   project. The callback receives the removed Template
+  #   instance as :template.
+  # == Remarks
+  # If +template+ is not part of the project or a template with this
+  # name can’t be found, nothing happens.
+  def remove_template(template)
+    template = @templates.find{|t| t.name == template} unless template.kind_of?(OpenRubyRMK::Backend::Template)
+    return unless @templates.include?(template)
+
+    changed
+    @templates.delete(template)
+    notify_observers(:template_removed, :template => template)
   end
 
   # Adds the a Category instance to the list of categories for this
