@@ -504,9 +504,11 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
     File.open(target, "w"){|f| f.write(to_xml(target))}
   end
 
+  private
+
   # Generate a new and unique (as per this map) ID. Used
   # by MapEvent#initialize.
-  def generate_object_id # :nodoc:
+  def generate_object_id
     @object_id_mutex.synchronize do
       @last_object_id += 1
     end
@@ -514,7 +516,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
   # Format the given object ID the way it should be
   # presented to the user and is used for name generation.
-  def format_object_id(id) # :nodoc:
+  def format_object_id(id)
     sprintf("0x%08x", id)
   end
 
