@@ -20,21 +20,44 @@
 #
 #       code <<-CODE
 #         %{count}.times do
-#           $player.items << Item[%{item}]
+#           $player.items << Item["%{item}"]
 #         end
 #       CODE
 #     end
 #   end
 #
 # As can be seen, the individual parameters can be substituted
-# into the template by means of %{nameoftheparameter}.
+# into the template by means of %{nameoftheparameter}. If you
+# want a raw percent sign, use %%.
+#
+# To evaluate this template, do the following:
+#
+#  chest.result([
+#    {:count => 3, :item => "banana"}
+#  ]) do |page, result|
+#    eval(result)
+#  end
+#
+# The Template#result method takes an array of hashes,
+# where each hash carries the values for the parameters
+# of the page its position in the array corresponds to,
+# i.e. the hash with index 0 will be used for page 0,
+# etc.
 class OpenRubyRMK::Backend::Template
 
+  # A single page inside a template. It encapsulates
+  # a defined number of parameters which can finally
+  # be referenced inside the code part of the page.
+  # Each parameter has a name and a type, and possibly
+  # a default value (+nil+ is used if you ommit the
+  # default).
   class TemplatePage
     extend OpenRubyRMK::Backend::Properties
 
     ##
-    # Page number.
+    # Page number. Ensure it really corresponds to
+    # the array index of the page in the Template#pages
+    # array.
     property :number
 
     ##
