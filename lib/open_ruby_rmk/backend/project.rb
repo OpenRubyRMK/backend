@@ -66,6 +66,7 @@ class OpenRubyRMK::Backend::Project
       @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
       @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
       @categories  = @paths.categories_dir.children.map{|path| OpenRubyRMK::Backend::Category.from_file(path) if path.file?}
+      @templates   = [] # FIXME: Save and load templates!
     end
 
     proj
@@ -91,6 +92,7 @@ class OpenRubyRMK::Backend::Project
     @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
     @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file) # Skeleton may (and most likely does) contain maps
     @categories  = @paths.categories_dir.children.map{|path| OpenRubyRMK::Backend::Category.from_file(path) if path.file?}
+    @templates   = []
   end
 
   # Human-readable description.
