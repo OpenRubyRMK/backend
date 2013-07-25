@@ -48,11 +48,17 @@ class OpenRubyRMK::Backend::Template
     ##
     # Code of the page, as a string. Use %{parametername} to
     # substitute a parameter value.
-    property :code,       :default => ""
+    property :code,       :default => proc{""} # Prevent byref!
 
     ##
     # List of Parameter instances for this page.
-    property :parameters, :default => []
+    property :parameters, :default => proc{[]} # Prevent byref!
+
+    # Create a new TemplatePage, passing the
+    # page number.
+    def initialize(pagenum)
+      @number = pagenum
+    end
 
     # Define a parameter for the page.
     # == Parameters
@@ -71,7 +77,7 @@ class OpenRubyRMK::Backend::Template
       raise(ArgumentError, "No :type given") unless opts[:type]
 
       param = Parameter.new(name.to_s, opts[:type], !opts[:default], opts[:default])
-      @parameters << param
+      parameters << param
     end
 
     # Stencils out the template code with the given parameters.
@@ -88,12 +94,12 @@ class OpenRubyRMK::Backend::Template
       hsh    = {}
 
       # Note the use of #has_key? as the value may be explicitely +nil+.
-      @parameters.each do |para|
+      parameters.each do |para|
         raise(ArgumentError, "Required parameter `#{para.name}' missing for page ##@number!") if para.required? && !params.has_key?(para.name)
         hsh[para.name] = params.has_key?(para.name) ? params[para.name] : para.default_value
       end
 
-      sprintf(code, hsh)
+      sprintf(code, hsh.recursively_symbolize_keys) # FIXME: https://bugs.ruby-lang.org/issues/8688
     end
 
   end

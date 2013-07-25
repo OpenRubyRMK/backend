@@ -29,7 +29,13 @@ module OpenRubyRMK::Backend::Properties
     # Combined Getter/Setter
     define_method(name) do |*args|
       if args.count.zero?
-        instance_variable_set(ivar, hsh[:default]) unless instance_variable_defined?(ivar)
+        # If the variable is unset, set it with the default
+        # (which may also be a Proc that is to be called).
+        unless instance_variable_defined?(ivar)
+          default = hsh[:default].respond_to?(:call) ? hsh[:default].call : hsh[:default]
+          instance_variable_set(ivar, default)
+        end
+
         instance_variable_get(ivar)
       elsif args.count == 1
         instance_variable_set(ivar, args.first)
