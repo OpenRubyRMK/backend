@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template name="dummy" width="32" height="32">
+  <pages>
+    <page number="0">
+      <graphic>dummy.png</graphic>
+      <trigger>activate</trigger>
+      <code>
+        puts &quot;This is %{someone}, a dummy.&quot;
+      </code>
+      <parameters>
+        <parameter name="someone" type="string" default_value=""/>
+      </parameters>
+    </page>
+  </pages>
+</template>

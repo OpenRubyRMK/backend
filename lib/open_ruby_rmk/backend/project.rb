@@ -10,9 +10,9 @@ class OpenRubyRMK::Backend::Project
   include OpenRubyRMK::Backend::Invalidatable
   include OpenRubyRMK::Backend::Eventable
 
-  #Struct encapsulating all the path information for a
-  #single project.
-  Paths = Struct.new(:root, :rmk_file, :data_dir, :resources_dir, :maps_dir, :maps_file, :graphics_dir, :tilesets_dir, :scripts_dir, :bin_dir, :start_file, :categories_dir) do
+  # Struct encapsulating all the path information for a
+  # single project.
+  Paths = Struct.new(:root, :rmk_file, :data_dir, :resources_dir, :maps_dir, :maps_file, :graphics_dir, :tilesets_dir, :scripts_dir, :bin_dir, :start_file, :categories_dir, :templates_dir) do
     def initialize(root) # :nodoc:
       self.root          = Pathname.new(root).expand_path
       self.rmk_file      = self.root     + "project.rmk"
@@ -26,13 +26,14 @@ class OpenRubyRMK::Backend::Project
       self.bin_dir       = self.root     + "bin"
       self.start_file    = bin_dir       + "start.rb"
       self.categories_dir = data_dir     + "categories"
+      self.templates_dir = data_dir      + "templates"
     end
   end
 
-  #The Paths struct belonging to this project.
+  # The Paths struct belonging to this project.
   attr_reader :paths
-  #This project’s main configuration, i.e. the parsed contents
-  #of the +rmk+ file.
+  # This project’s main configuration, i.e. the parsed contents
+  # of the +rmk+ file.
   attr_reader :config
   # The root maps of a project. Don’t work on this directly,
   # use #add_root_map and #remove_root_map.
@@ -66,7 +67,7 @@ class OpenRubyRMK::Backend::Project
       @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
       @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file)
       @categories  = @paths.categories_dir.children.map{|path| OpenRubyRMK::Backend::Category.from_file(path) if path.file?}
-      @templates   = [] # FIXME: Save and load templates!
+      @templates   = @paths.templates_dir.children.map{|path| OpenRubyRMK::Backend::Template.from_file(path) if path.file?}
     end
 
     proj
@@ -92,7 +93,7 @@ class OpenRubyRMK::Backend::Project
     @config      = YAML.load_file(@paths.rmk_file.to_s).recursively_symbolize_keys
     @root_maps   = OpenRubyRMK::Backend::MapStorage.load_maps_tree(@paths.maps_dir, @paths.maps_file) # Skeleton may (and most likely does) contain maps
     @categories  = @paths.categories_dir.children.map{|path| OpenRubyRMK::Backend::Category.from_file(path) if path.file?}
-    @templates   = []
+    @templates   = @paths.templates_dir.children.map{|path| OpenRubyRMK::Backend::Template.from_file(path) if path.file?}
   end
 
   # Human-readable description.
@@ -248,6 +249,11 @@ class OpenRubyRMK::Backend::Project
     # categories really get removed)
     @paths.categories_dir.each_child{|path| path.delete if path.file?}
     @categories.each{|cat| cat.save(@paths.categories_dir)}
+
+    # The templates (again, clearing the directory to ensure
+    # removed templates really get deleted)
+    @paths.templates_dir.each_child{|path| path.delete if path.file?}
+    @templates.each{|template| template.save(@paths.templates_dir)}
 
     # The maps (clearing the directory to ensure deleted
     # maps really get removed)

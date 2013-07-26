@@ -127,6 +127,14 @@ class OpenRubyRMK::Backend::Template
 
   end
 
+  # Hash used to convert the default values for parameters from
+  # XML (where they always are strings) to a useful Ruby value.
+  PARAMETER_TYPE_CONVERSIONS = {
+    :string  => lambda{|para| para.to_s},
+    :number  => lambda{|para| para.to_i},
+    :boolean => lambda{|para| para == "true"}
+  }
+
   # This struct describes a single parameter by name and type.
   # If +required+ is set, the +default_value+ *must* be ignored
   # and an exception must be raised if that parameter is missing
@@ -145,6 +153,44 @@ class OpenRubyRMK::Backend::Template
   attr_reader :height
   # List of TemplatePage instances for this template.
   attr_reader :pages
+
+  # Escapes +str+ in a way that it should be usable as a valid
+  # filename on most operating systems. Returns a new string.
+  def self.escape_filename(str)
+    str.gsub(/[[:punct:]]/, "").gsub(/[[:space:]]/, "_")
+  end
+
+  def self.from_file(path)
+    template = allocate
+    template.instance_eval do
+      template_node = Nokogiri::XML(File.open(path)).root
+
+      @name   = template_node["name"]
+      @width  = template_node["width"].to_i
+      @height = template_node["height"].to_i
+      @pages  = []
+
+      template_node.xpath("pages/page").each do |page_node|
+        page         = TemplatePage.new(page_node["number"].to_i)
+        page.graphic = page_node.xpath("graphic").text.strip.empty? ? nil : page_node.xpath("graphic").text.strip
+        page.trigger = page_node.xpath("trigger").text.strip.empty? ? nil : page_node.xpath("trigger").text.strip.to_sym
+        page.code    = page_node.xpath("code").text.strip
+
+        page_node.xpath("parameters/parameter").each do |para_node|
+          type = para_node["type"].to_sym
+          default = para_node["default_value"].strip
+
+          page.parameter(para_node["name"],
+                         :type => type,
+                         :default => default.empty? ? nil : PARAMETER_TYPE_CONVERSIONS[type].call(default))
+        end
+
+        @pages << page
+      end
+    end
+
+    template
+  end
 
   # call-seq:
   #   new( name ) → template
@@ -197,6 +243,18 @@ class OpenRubyRMK::Backend::Template
   end
 
   # call-seq:
+  #   eql?(other) → true, false, nil
+  #   self == other → true, false, nil
+  #
+  # Compares two templates. Two templates are considered equal
+  # if they have the same #name.
+  def eql?(other)
+    return nil unless other.respond_to?(:name)
+    @name == other.name
+  end
+  alias == eql?
+
+  # call-seq:
   #   result(page_params){|page, result| ...}
   #
   # Evaluate the template with the given parameter-page array.
@@ -243,6 +301,35 @@ class OpenRubyRMK::Backend::Template
     end
 
     @pages << page
+  end
+
+  def save(templates_dir)
+    b = Nokogiri::XML::Builder.new(encoding: "UTF-8") do |xml|
+      xml.template(:name => @name, :width => @width, :height => @height) do |template_node|
+
+        template_node.pages do |pages_node|
+          @pages.each do |page|
+            pages_node.page(:number => page.number) do |page_node|
+              page_node.graphic(page.graphic)
+              page_node.trigger(page.trigger)
+              page_node.code(page.code)
+
+              page_node.parameters do |paras_node|
+                page.parameters.each do |para|
+                  paras_node.parameter(:name => para.name, :type => para.type, :default_value => para.default_value)
+                end #each
+              end # </parameters>
+
+            end # </page>
+          end #each
+        end # </pages>
+
+      end # </template>
+    end #new
+
+    target = Pathname.new(templates_dir).join("#{self.class.escape_filename(@name)}.xml")
+    target.open("w"){|file| file.write(b.to_xml)}
+    target
   end
 
 end
