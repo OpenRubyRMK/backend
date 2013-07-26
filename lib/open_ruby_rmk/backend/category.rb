@@ -573,8 +573,9 @@ class OpenRubyRMK::Backend::Category
   end
 
   # Saves a category out to disk, in the given
-  # directory. The filename is the base64-encoded
-  # +name+ of the category.
+  # directory. The filename is constructed from
+  # the category’s +name+ via the ::escape_filename
+  # method.
   def save(categories_dir)
     b = Nokogiri::XML::Builder.new(encoding: "UTF-8") do |xml|
       xml.category(:name => @name) do |cat_node|

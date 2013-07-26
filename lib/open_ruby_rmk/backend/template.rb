@@ -43,6 +43,9 @@
 # of the page its position in the array corresponds to,
 # i.e. the hash with index 0 will be used for page 0,
 # etc.
+#
+# You should use Project#add_template and Project#remove_template
+# in order to add templates to a project/remove templates from it.
 class OpenRubyRMK::Backend::Template
 
   # A single page inside a template. It encapsulates
@@ -160,6 +163,18 @@ class OpenRubyRMK::Backend::Template
     str.gsub(/[[:punct:]]/, "").gsub(/[[:space:]]/, "_")
   end
 
+  # Load a template from an XML file.
+  # == Parameters
+  # [path]
+  #   The file to load the template from. May be a string or
+  #   a Pathname instance.
+  # == Return value
+  # A new Template instance. Note it is not associated with
+  # any project, you will have to call Project#add_template
+  # yourself.
+  # == Remarks
+  # This method is used internally by Project#load_project_file,
+  # so you most likely won’t ever need it.
   def self.from_file(path)
     template = allocate
     template.instance_eval do
@@ -303,6 +318,19 @@ class OpenRubyRMK::Backend::Template
     @pages << page
   end
 
+  # Saves the template instance into an XML file so it
+  # can later be restored from that file again.
+  # == Parameters
+  # [templates_dir]
+  #   The directory to place the XML file in. This
+  #   directory must exist; the filename itself
+  #   is derived from the template’s #name via
+  #   the ::escape_filename method.
+  # == Return value
+  # A Pathname instance pointing to the new file.
+  # == Remarks
+  # Any content in the target file, if any, will be
+  # overwritten.
   def save(templates_dir)
     b = Nokogiri::XML::Builder.new(encoding: "UTF-8") do |xml|
       xml.template(:name => @name, :width => @width, :height => @height) do |template_node|
