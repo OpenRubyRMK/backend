@@ -56,8 +56,13 @@
 #    return all objects on this map that have that name. By default,
 #    the +custom_name+ is generated from the ID.
 #
-# If you use the #add_object method, these will automatically be
-# taken care of for you.
+# To easily obey these conventions, there’s the MapObject class,
+# which only is a shallow wrapper around TiledTmx::Object; everything
+# it can do could also be done directly with TiledTmx::Object instances,
+# but it ensures you don’t make mistakes regarding the above conventions.
+# Use #add_object to add these objects to the map, and #get_object /
+# #get_objects to retrieve them directly retrieve them as MapObject
+# instances.
 class OpenRubyRMK::Backend::Map < TiledTmx::Map
   include OpenRubyRMK::Backend::Eventable
 
@@ -429,7 +434,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     changed
     object.name ||= generate_object_id.to_s
-    object.properties["custom_name"] ||= sprintf("Event-#{format_object_id(object.id)}")
+    object.properties["custom_name"] ||= sprintf("Event-#{MapObject.format_object_id(object.id)}")
 
     layer.objects << object
     notify_observers :event_added, :layer => layer, :object => object
@@ -515,12 +520,6 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
     @object_id_mutex.synchronize do
       @last_object_id += 1
     end
-  end
-
-  # Format the given object ID the way it should be
-  # presented to the user and is used for name generation.
-  def format_object_id(id)
-    sprintf("0x%08x", id)
   end
 
 end

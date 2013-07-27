@@ -19,6 +19,19 @@
 # you can use the #modify_params method to change the settings used
 # to evaluate the template in the game engine later on. As for anything
 # else, you have to modify the Template instance itself.
+#
+# As said, MapObject is just a shallow wrapper around TiledTmx::Map.
+# All relevant methods delegate to the wrapped instance of that class,
+# except they intercept when not applicable to either generic or
+# templated objects. Methods like #id provide a shortcut interface
+# to querying the TMX +properties+ yourself and all modification
+# methods will propely propage to the underlying TMX object.
+#
+# Use ::from_tmx_object in order to derive a MapObject from
+# an existing TiledTmx::Object; it will automatically be
+# detected whether it’s a generic or templated object.
+#
+# For more information, read the class docs of the Map class.
 class OpenRubyRMK::Backend::MapObject
 
   # If a TMX object has this +type+, it is considered
@@ -32,10 +45,22 @@ class OpenRubyRMK::Backend::MapObject
   # The underlying TiledTmx::Object.
   attr_reader :tmx_object
 
+  # Format the given object ID the way it should be
+  # presented to the user and is used for name generation.
+  def self.format_object_id(id)
+    sprintf("0x%08x", id)
+  end
+
   # Create a MapObject from a TiledTmx::Object. Any modifications
   # you make to the MapObject will automatically be propagated
   # to the TiledTmx::Object.
+  #
+  # If +tmx_obj+ is already a MapObject instance, it will
+  # just be returned.
   def self.from_tmx_object(tmx_obj)
+    # If we already get a MapObject, we just return it.
+    return tmx_object if tmx_obj.kind_of?(self)
+
     obj = allocate
     obj.instance_variable_set(:@tmx_object, tmx_obj)
     obj
@@ -254,6 +279,28 @@ class OpenRubyRMK::Backend::MapObject
       current_params.update(params)
       @tmx_object.properties["templateparams-#{index}"] = current_params.to_json # FIXME: This should be nested XML, but the TMX format doesn’t allow this
     end
+  end
+
+  # Returns the map-unique ID of this MapObject, i.e.
+  # the TMX +name+.
+  def id
+    name.to_i # This is stored as a string in TMX
+  end
+
+  # Returns the map-unique ID of this MapObject the
+  # way it should be presented to the user.
+  def formatted_id
+    self.class.format_object_id(id)
+  end
+
+  # Returns the custom, changable name for this object.
+  def custom_name
+    properties["custom_name"]
+  end
+
+  # Set the custom, changable name for this object.
+  def custom_name=(str)
+    properties["custom_name"] = str.to_str
   end
 
   private
