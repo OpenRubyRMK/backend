@@ -434,7 +434,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     changed
     object.name ||= generate_object_id.to_s
-    object.properties["custom_name"] ||= sprintf("Event-#{MapObject.format_object_id(object.id)}")
+    object.properties["custom_name"] ||= sprintf("Event-#{OpenRubyRMK::Backend::MapObject.format_object_id(object.id)}")
 
     layer.objects << object
     notify_observers :event_added, :layer => layer, :object => object
@@ -452,7 +452,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     each_layer(TiledTmx::ObjectGroup) do |layer|
       layer.objects.each do |object|
-        return MapObject.from_tmx_object(object) if object.name == idstr
+        return OpenRubyRMK::Backend::MapObject.from_tmx_object(object) if object.name == idstr
       end
     end
 
@@ -473,7 +473,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     each_layer(TiledTmx::ObjectGroup) do |layer|
       layer.objects.each do |object|
-        result << MapObject.from_tmx_object(object) if object.properties["custom_name"] == custom_name
+        result << OpenRubyRMK::Backend::MapObject.from_tmx_object(object) if object.properties["custom_name"] == custom_name
       end
     end
 
