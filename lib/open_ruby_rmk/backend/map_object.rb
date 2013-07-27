@@ -284,7 +284,7 @@ class OpenRubyRMK::Backend::MapObject
   # Returns the map-unique ID of this MapObject, i.e.
   # the TMX +name+.
   def id
-    name.to_i # This is stored as a string in TMX
+    @tmx_object.name.to_i # This is stored as a string in TMX
   end
 
   # Returns the map-unique ID of this MapObject the
@@ -295,12 +295,12 @@ class OpenRubyRMK::Backend::MapObject
 
   # Returns the custom, changable name for this object.
   def custom_name
-    properties["custom_name"]
+    @tmx_object.properties["custom_name"]
   end
 
   # Set the custom, changable name for this object.
   def custom_name=(str)
-    properties["custom_name"] = str.to_str
+    @tmx_object.properties["custom_name"] = str.to_str
   end
 
   private
