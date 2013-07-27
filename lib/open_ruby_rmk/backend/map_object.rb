@@ -21,14 +21,16 @@
 # else, you have to modify the Template instance itself.
 class OpenRubyRMK::Backend::MapObject
 
+  # If a TMX object has this +type+, it is considered
+  # to be a generic, non-template-derived object.
+  # You cannot have a template with this name!
+  GENERIC_OBJECT_TYPENAME = "generic".freeze
+
   # A single page for a generic map object.
   Page = Struct.new(:number, :graphic, :trigger, :code)
 
   # The underlying TiledTmx::Object.
   attr_reader :tmx_object
-  # The underlying OpenRubyRMK::Backend::Template, if any.
-  # +nil+ otherwise.
-  attr_reader :template
 
   # Create a MapObject from a TiledTmx::Object. Any modifications
   # you make to the MapObject will automatically be propagated
@@ -61,13 +63,13 @@ class OpenRubyRMK::Backend::MapObject
   def self.from_template(template, page_params = [])
     obj = allocate
     obj.instance_eval do
-      @tmx_object.type = template.name # This is not a generic event
+      @tmx_object.type   = template.name   # This is not a generic event
+      @tmx_object.width  = template.width  # FIXME: This may get...
+      @tmx_object.height = template.height # ...out of sync if the template is changed
 
       page_params.each_with_index do |params, index|
         @tmx_object.properties["templateparams-#{index}"] = params.to_json # FIXME: This should be nested XML, but the TMX format doesn’t allow this
       end
-
-      @template = template
     end
 
     obj
@@ -77,7 +79,6 @@ class OpenRubyRMK::Backend::MapObject
   # The underlying TiledTmx::Object is automatically created for you.
   def initialize
     @tmx_object = TiledTmx::Object.new
-    @template   = nil
   end
 
   # Two MapObjects are considered equal if they refer to the
@@ -134,11 +135,7 @@ class OpenRubyRMK::Backend::MapObject
 
   # The width of this map object, in pixels.
   def width
-    if generic?
-      @tmx_object.width
-    else
-      @template.width
-    end
+    @tmx_object.width
   end
 
   # Delegates to TiledTmx::Object#width=.
@@ -150,11 +147,7 @@ class OpenRubyRMK::Backend::MapObject
 
   # The height of this map object, in pixels.
   def height
-    if generic?
-      @tmx_object.height
-    else
-      @template.height
-    end
+    @tmx_object.height
   end
 
   # Delegates to TiledTm::Object#height=.
@@ -236,7 +229,7 @@ class OpenRubyRMK::Backend::MapObject
 
   # True if this is a generic, i.e. not-templated-created, map object.
   def generic?
-    @tmx_object.type == "generic"
+    @tmx_object.type == GENERIC_OBJECT_TYPENAME
   end
 
   # True if this is not a generic, i.e. a templated-created, map object.
