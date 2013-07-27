@@ -434,7 +434,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     changed
     object.name ||= generate_object_id.to_s
-    object.properties["custom_name"] ||= sprintf("Event-#{OpenRubyRMK::Backend::MapObject.format_object_id(object.id)}")
+    object.properties["custom_name"] ||= sprintf("Event-#{OpenRubyRMK::Backend::MapObject.format_object_id(object.name)}")
 
     layer.objects << object
     notify_observers :event_added, :layer => layer, :object => object
