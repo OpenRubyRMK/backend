@@ -86,6 +86,11 @@ class OpenRubyRMK::Backend::Template
       @number = pagenum
     end
 
+    # Human-readable description.
+    def inspect
+      "#<#{self.class} Nr. #@number with #{@parameters.count} parameters>"
+    end
+
     # Define a parameter for the page.
     # == Parameters
     # [name]
@@ -255,6 +260,11 @@ class OpenRubyRMK::Backend::Template
         instance_eval(&block)
       end
     end
+  end
+
+  # Human-readable description.
+  def inspect
+    "#<#{self.class} \"#@name\" with #{@pages.count} pages (#{@width}x#{@height}px)>"
   end
 
   # call-seq:
