@@ -11,7 +11,9 @@ GEM
   specs:
     ansi (1.4.3)
     json (1.7.7)
-    nokogiri (1.5.9)
+    mini_portile (0.5.1)
+    nokogiri (1.6.0)
+      mini_portile (~> 0.5.0)
     paint (0.8.6)
     rake (10.0.4)
     rbtree (0.4.1)
