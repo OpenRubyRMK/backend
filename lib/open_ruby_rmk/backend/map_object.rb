@@ -286,6 +286,32 @@ class OpenRubyRMK::Backend::MapObject
     end
   end
 
+  # Returns the parameters for a templated object as an
+  # array of hashes (see Template#result for a description
+  # of the format).
+  # == Return value
+  # As described.
+  # == Remarks
+  # The resulting array can’t be modified, because the underlying
+  # TMX object has to be changed accordingly. Use #modify_params
+  # in order to modify the parameters.
+  def params
+    templated!
+
+    ary = []
+    0.upto(Float::INFINITY) do |i|
+      str = @tmx_object.properties["templateparams-#{i}"]
+      if str
+        ary << JSON.parse(str) # FIXME: This should be nested XML, but the TMX format doesn’t allow this
+      else
+        break
+      end
+    end
+
+    ary.freeze
+    ary
+  end
+
   # Returns the map-unique ID of this MapObject, i.e.
   # the TMX +name+.
   def id
