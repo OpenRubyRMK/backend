@@ -98,8 +98,8 @@ class OpenRubyRMK::Backend::Template
     # [opts]
     #   A hash taking the following parameters
     #   [type]
-    #     The parameter’s type.
-    #     FIXME: Which types are supported?
+    #     The parameter’s type. The supported parameter types
+    #     are: :string, :number, :bool
     #   [default]
     #     The default value if the parameter is not given.
     #     If this is ommitted, the parameter will automatically
