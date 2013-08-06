@@ -92,4 +92,11 @@ class TemplateTest < Test::Unit::TestCase
     end
   end
 
+  def test_template_names
+    t = Template.new("foo")
+    assert t
+
+    assert_raises(NameError){Template.new(MapObject::GENERIC_OBJECT_TYPENAME)}
+  end
+
 end

@@ -248,6 +248,10 @@ class OpenRubyRMK::Backend::Template
   #   template.parameter(:para1, type: :string)
   # end
   def initialize(name, width = OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE, height = OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE, &block)
+    if name == OpenRubyRMK::Backend::MapObject::GENERIC_OBJECT_TYPENAME
+      raise(NameError, "The template name must not be `#{OpenRubyRMK::Backend::MapObject::GENERIC_OBJECT_TYPENAME}' (the identifier for non-templated objects)")
+    end
+
     @name   = name
     @width  = width
     @height = height
