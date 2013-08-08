@@ -87,6 +87,19 @@ class TemplateTest < Test::Unit::TestCase
     end
   end
 
+  def test_page_operations
+    assert_equal 2, @template.pages.count
+    @template.remove_page(0)
+    assert_equal 1, @template.pages.count
+    assert_equal 0, @template.pages.last.number
+
+    page = Template::TemplatePage.new(7) # number must be corrected by #insert_page
+    @template.insert_page(0, page)
+    assert_equal 2, @template.pages.count
+    assert_equal 0, page.number
+    assert_equal 1, @template.pages.last.number
+  end
+
   def test_template_names
     t = Template.new("foo")
     assert t

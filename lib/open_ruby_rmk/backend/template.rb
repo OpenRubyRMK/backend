@@ -329,6 +329,31 @@ class OpenRubyRMK::Backend::Template
     @pages << page
   end
 
+  # Delete the page with the given number and ensure
+  # all following pages have their numbers adjusted properly.
+  # == Parameter
+  # [n]
+  #   The index of the page you want to delete.
+  def remove_page(n)
+    @pages.delete_at(n)
+    @pages[n..-1].each{|page| page.number -= 1}
+  end
+
+  # Insert a page at the given index and ensure all
+  # following pages  have their numbers adjusted properly.
+  # == Parameters
+  # [n]
+  #   The index to insert at; all following pages shift
+  #   up by one.
+  # [page]
+  #   The TemplatePage instance to insert.
+  def insert_page(n, page)
+    @pages.insert(n, page)
+
+    page.number = n # Just to be sure
+    @pages[(n+1)..-1].each{|page| page.number += 1}
+  end
+
   # Saves the template instance into an XML file so it
   # can later be restored from that file again.
   # == Parameters
