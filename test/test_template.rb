@@ -12,8 +12,8 @@ class TemplateTest < Test::Unit::TestCase
     @template = Template.new "chest" do
       page do
         graphic "page1.png"
-        parameter :item, :type => :string
-        parameter :count, :type => :number, :default => 1
+        parameter :item
+        parameter :count, :default => 1
 
         code <<-CODE
           %{count}.times do
@@ -22,7 +22,7 @@ class TemplateTest < Test::Unit::TestCase
         CODE
       end
       page do
-        parameter :text, :type => :string
+        parameter :text
 
         code <<-CODE
           $items << "%{text}"
@@ -43,15 +43,12 @@ class TemplateTest < Test::Unit::TestCase
     assert_equal "page1.png", page.graphic
     assert_equal 2, page.parameters.count
     assert_equal "item", page.parameters.first.name
-    assert_equal :string, page.parameters.first.type
-    assert_equal nil, page.parameters.first.default_value
 
     page = @template.pages.last
     assert page
     assert_equal 1, page.number
     assert_equal nil, page.graphic
     assert_equal "text", page.parameters.first.name
-    assert_equal :string, page.parameters.first.type
   end
 
   def test_template_evaluation
@@ -79,13 +76,11 @@ class TemplateTest < Test::Unit::TestCase
       refute_empty template.pages.first.code
 
       assert_equal "item", template.pages.first.parameters.first.name
-      assert_equal :string, template.pages.first.parameters.first.type
       assert template.pages.first.parameters.first.required?
 
       assert_equal "count", template.pages.first.parameters.last.name
-      assert_equal :number, template.pages.first.parameters.last.type
       refute template.pages.first.parameters.last.required?
-      assert_equal 1, template.pages.first.parameters.last.default_value
+      assert_equal "1", template.pages.first.parameters.last.default_value
 
       assert_equal nil, template.pages.last.graphic
       refute_empty template.pages.last.code

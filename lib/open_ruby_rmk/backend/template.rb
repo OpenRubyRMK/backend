@@ -15,8 +15,8 @@
 #     # Call #page as often as you need it; the pages are numbered
 #     # from 0 on upwards if you need to refer to them.
 #     page do
-#       parameter :item,  :type => :string
-#       parameter :count, :type => :number, :default => 1
+#       parameter :item
+#       parameter :count, :default => 1
 #
 #       code <<-CODE
 #         %{count}.times do
@@ -96,18 +96,25 @@ class OpenRubyRMK::Backend::Template
     # [name]
     #   The parameter’s name.
     # [opts]
-    #   A hash taking the following parameters
-    #   [type]
-    #     The parameter’s type. The supported parameter types
-    #     are: :string, :number, :bool
+    #   A hash taking the following parameters:
+    #   [required]
+    #     Override the default setting determied by checking
+    #     +default+ (see below).
     #   [default]
-    #     The default value if the parameter is not given.
-    #     If this is ommitted, the parameter will automatically
-    #     be marked as required.
-    def parameter(name, opts)
-      raise(ArgumentError, "No :type given") unless opts[:type]
+    #     The default value if the parameter is not given (this
+    #     is autoconverted to a string).
+    #
+    #     If +required+ is not given and neither is +default+ (or
+    #     +default+ is set to +nil+), assumes the parameter is
+    #     required. If you (senselessly) want a parameter to have
+    #     a defaultvalue of nil (which is converted to "" anyway),
+    #     you must explicitely pass +required+ set to +true+. Otherwise,
+    #     i.e. if +default+ is set to anything but +nil+, assumes
+    #     the parameter is optional.
+    def parameter(name, opts = {})
+      opts[:required] = opts[:default].nil? unless opts.has_key?(:required)
 
-      param = Parameter.new(name.to_s, opts[:type], !opts[:default], opts[:default])
+      param = Parameter.new(name.to_s, opts[:required], opts[:default].to_s) # On substitution it is stringified anyway so we can do it here as well
       parameters << param
     end
 
@@ -135,19 +142,11 @@ class OpenRubyRMK::Backend::Template
 
   end
 
-  # Hash used to convert the default values for parameters from
-  # XML (where they always are strings) to a useful Ruby value.
-  PARAMETER_TYPE_CONVERSIONS = {
-    :string  => lambda{|para| para.to_s},
-    :number  => lambda{|para| para.to_i},
-    :boolean => lambda{|para| para == "true"}
-  }
-
   # This struct describes a single parameter by name and type.
   # If +required+ is set, the +default_value+ *must* be ignored
   # and an exception must be raised if that parameter is missing
   # on evaluation.
-  Parameter = Struct.new(:name, :type, :required, :default_value) do
+  Parameter = Struct.new(:name, :required, :default_value) do
     def required? # :nodoc:
       required
     end
@@ -197,12 +196,10 @@ class OpenRubyRMK::Backend::Template
         page.code    = page_node.xpath("code").text.strip
 
         page_node.xpath("parameters/parameter").each do |para_node|
-          type = para_node["type"].to_sym
-          default = para_node["default_value"].strip
 
           page.parameter(para_node["name"],
-                         :type => type,
-                         :default => default.empty? ? nil : PARAMETER_TYPE_CONVERSIONS[type].call(default))
+                         :required => para_node["required"].strip != "false",
+                         :default => para_node["default_value"].strip)
         end
 
         @pages << page
@@ -358,7 +355,7 @@ class OpenRubyRMK::Backend::Template
 
               page_node.parameters do |paras_node|
                 page.parameters.each do |para|
-                  paras_node.parameter(:name => para.name, :type => para.type, :default_value => para.default_value)
+                  paras_node.parameter(:name => para.name, :required => para.required, :default_value => para.default_value)
                 end #each
               end # </parameters>
 
