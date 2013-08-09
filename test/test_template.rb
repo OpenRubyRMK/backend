@@ -107,4 +107,26 @@ class TemplateTest < Test::Unit::TestCase
     assert_raises(NameError){Template.new(MapObject::GENERIC_OBJECT_TYPENAME)}
   end
 
+  def test_template_parameters
+    page = @template.pages.first
+
+    # Deletion with name
+    assert_equal 2, page.parameters.count
+    page.delete_parameter("count")
+    assert_equal 1, page.parameters.count
+    assert_equal "item", page.parameters.first.name
+
+    # Inserting a new parameter at the beginning
+    param = Template::Parameter.new("foo", true)
+    page.insert_parameter(param, 0)
+    assert_equal 2, page.parameters.count
+    assert_equal "foo", page.parameters.first.name
+    assert_equal "item", page.parameters.last.name
+
+    # Deletion with Parameter instance rather than name
+    page.delete_parameter(param)
+    assert_equal 1, page.parameters.count
+    assert_equal "item", page.parameters.first.name
+  end
+
 end

@@ -118,6 +118,37 @@ class OpenRubyRMK::Backend::Template
       parameters << param
     end
 
+    # Insert a parameter into this page.
+    # == Parameters
+    # [param]
+    #   The Template::Parameter instance to insert.
+    # [index]
+    #   The index to insert the parameter at.
+    #   Values < 0 are automatically reset to 0.
+    # == Remarks
+    # You probably want to use #parameter to add parameters
+    # when using the DSL to construct templates. This method
+    # is more meant for postmodification of an already created
+    # template page.
+    def insert_parameter(param, index)
+      index = 0 if index < 0 # For symmetry with Template#insert_page
+      parameters.insert(index, param)
+    end
+
+    # Deletes a parameter from this page.
+    # == Parameters
+    # [param]
+    #   The Template::Parameter instance to delete, or a
+    #   string specifying the name of the parameter to
+    #   delete.
+    # == Remarks
+    # Does nothing if +param+ is not found on this page.
+    def delete_parameter(param)
+      target = param.kind_of?(OpenRubyRMK::Backend::Template::Parameter) ? param : parameters.find{|x| x.name == param}
+      return unless target
+      parameters.delete(target)
+    end
+
     # Stencils out the template code with the given parameters.
     # == Parameters
     # [params ({})]
@@ -344,13 +375,15 @@ class OpenRubyRMK::Backend::Template
   # == Parameters
   # [n]
   #   The index to insert at; all following pages shift
-  #   up by one.
+  #   up by one. Numbers < 0 will be reset to 0.
   # [page]
   #   The TemplatePage instance to insert.
   def insert_page(n, page)
     @pages.insert(n, page)
 
+    n = 0 if n < 0 # No negative inserting
     page.number = n # Just to be sure
+
     @pages[(n+1)..-1].each{|page| page.number += 1}
   end
 
