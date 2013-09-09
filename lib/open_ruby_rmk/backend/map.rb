@@ -430,13 +430,18 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
   #   a :layer and an :object parameter representing the respective things.
   def add_object(layer_num, object)
     layer = get_layer(layer_num)
-    raise(ArgumentError, "Layer ##{layer_num} is not an ObjectGroup") unless layer.kind_of?(TiledTmx::ObjectGroup)
+    raise(ArgumentError, "Layer ##{layer_num} is not an ObjectGroup (got #{layer.class})") unless layer.kind_of?(TiledTmx::ObjectGroup)
 
     changed
     object.name ||= generate_object_id.to_s
     object.properties["custom_name"] ||= sprintf("Event-#{OpenRubyRMK::Backend::MapObject.format_object_id(object.name)}")
 
-    layer.objects << object
+    if object.kind_of?(OpenRubyRMK::Backend::MapObject)
+      layer.objects << object.tmx_object
+    else
+      layer.objects << object
+    end
+
     notify_observers :event_added, :layer => layer, :object => object
   end
 
@@ -507,9 +512,12 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
   # inside a map file). Use the MapStorage module to save both
   # the map and the hierarchy information (MapStorage internally
   # calls this method if you worried about that).
+  #
+  # Returns the path to the written file as a string.
   def save(maps_dir)
     target = File.join(maps_dir, self.class.format_filename(@id))
     File.open(target, "w"){|f| f.write(to_xml(target))}
+    target
   end
 
   private

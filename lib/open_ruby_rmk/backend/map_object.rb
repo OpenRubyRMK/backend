@@ -39,8 +39,58 @@ class OpenRubyRMK::Backend::MapObject
   # You cannot have a template with this name!
   GENERIC_OBJECT_TYPENAME = "generic".freeze
 
-  # A single page for a generic map object.
-  Page = Struct.new(:number, :graphic, :trigger, :code)
+  # Ruby Struct representing a single page for a generic map object.
+  # Instances have the following attributes:
+  #
+  # [number]
+  #   The 0-based page number.
+  # [graphic]
+  #   A Pathname instance relative to the project
+  #   root’s <tt>data/resources/graphics</tt> directory.
+  #   Uses forward slashes / as path separator on any
+  #   platform. If you assign a string to this, it will
+  #   automatically converted to a Pathname for you.
+  # [trigger]
+  #   One of the following symbols (if you assign a string,
+  #   it will automatically be converted for you):
+  #   [:activate]
+  #     The player needs to explicitely press a key
+  #     to execute the code.
+  #   [:immediate]
+  #     The code is executed immediately when the map
+  #     has finished loading.
+  #   [:none]
+  #     The code cannot be executed at all. Useful for
+  #     purely-graphical stuff.
+  # [code]
+  #   A string containing the executable Ruby code for
+  #   this page.
+  class Page < Struct.new(:number, :graphic, :trigger, :code)
+
+    def initialize(*)
+      super
+      self.graphic ||= Pathname.new("")
+      self.trigger ||= :none
+      self.code    ||= ""
+    end
+
+    def trigger=(val)
+      # This case statement circumvents #to_sym which
+      # would otherwise be necessary for conversion here.
+      case val.to_s
+      when "activate"  then super(:activate)
+      when "immediate" then super(:immediate)
+      when "none"      then super(:none)
+      else
+        raise(ArgumentError, "Invalid trigger `#{val}'!")
+      end
+    end
+
+    def graphic=(val)
+      super(Pathname.new(val))
+    end
+
+  end
 
   # The underlying TiledTmx::Object.
   attr_reader :tmx_object
@@ -102,8 +152,10 @@ class OpenRubyRMK::Backend::MapObject
 
   # Create a new MapObject you can later on feed into Map#add_object.
   # The underlying TiledTmx::Object is automatically created for you.
-  def initialize
-    @tmx_object = TiledTmx::Object.new
+  # Any arguments are forwarded to TiledTmx::Object.new.
+  def initialize(*args)
+    @tmx_object = TiledTmx::Object.new(*args)
+    @tmx_object.type = GENERIC_OBJECT_TYPENAME
   end
 
   # Two MapObjects are considered equal if they refer to the
@@ -151,10 +203,14 @@ class OpenRubyRMK::Backend::MapObject
   # :method: gid=
   # Delegates.
 
+  ##
+  # :method: properties
+  # Delegates.
+
   # TiledTmx::Object delegators
-  [:name, :type, :gid, :x, :y, :name=, :x=, :y=, :gid=].each do |sym|
-    define_method(sym) do
-      @tmx_object.send(sym)
+  [:name, :type, :gid, :x, :y, :name=, :x=, :y=, :gid=, :properties].each do |sym|
+    define_method(sym) do |*args|
+      @tmx_object.send(sym, *args)
     end
   end
 
@@ -201,6 +257,9 @@ class OpenRubyRMK::Backend::MapObject
     page ||= Page.new(pages.count)
     yield(page) if block_given?
 
+    # Note we rely on two autoconversions of #to_json:
+    #  1. Symbols are converted to strings.
+    #  2. Pathnames are converted to strings.
     @tmx_object.properties["page-#{page.number}"] = page.to_h.to_json # FIXME: This should be nested XML, but the TMX format doesn’t allow this
   end
 
@@ -237,8 +296,15 @@ class OpenRubyRMK::Backend::MapObject
 
       @tmx_object.properties.each do |k, v|
         if k =~ /^page-\d+$/
-          page = Page.new($1.to_i, JSON.parse(v)) # FIXME: This should be nested XML, but the TMX format doesn’t allow this
+          hsh          = JSON.parse(v) # FIXME: This should be nested XML, but the TMX format doesn’t allow this
+          page         = Page.new
+          page.number  = $1.to_i
+          page.graphic = hsh["graphic"]
+          page.trigger = hsh["trigger"]
+          page.code    = hsh["code"]
           page.freeze # Can’t modify them, because we would need to update the JSON
+
+          result << page
         end
       end
 
@@ -326,12 +392,12 @@ class OpenRubyRMK::Backend::MapObject
 
   # Returns the custom, changable name for this object.
   def custom_name
-    @tmx_object.properties["custom_name"]
+    @tmx_object.properties["_name"]
   end
 
   # Set the custom, changable name for this object.
   def custom_name=(str)
-    @tmx_object.properties["custom_name"] = str.to_str
+    @tmx_object.properties["_name"] = str.to_str
   end
 
   private

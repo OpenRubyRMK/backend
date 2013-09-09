@@ -238,4 +238,84 @@ class MapTest < Test::Unit::TestCase
     assert_equal(123, @map.height)
   end
 
+  def test_generic_objects
+    @map.add_layer(:objectgroup, name: "Objects") # z = 1
+
+    o = MapObject.new
+    o.add_page do |page|
+      assert_raises(ArgumentError) do
+        page.trigger = :nonexistant
+      end
+    end
+
+    o = MapObject.new
+    o.add_page do |page|
+      page.graphic = "foo"
+      page.trigger = "activate"
+      page.code = <<-CODE
+        42
+      CODE
+    end
+    o.add_page do |page|
+      page.trigger = :immediate
+    end
+
+    assert_equal 2, o.pages.count
+    assert_equal 0, o.pages.first.number
+    assert_equal Pathname.new("foo"), o.pages.first.graphic
+    assert_equal :activate, o.pages.first.trigger
+    assert_equal 42, eval(o.pages.first.code)
+    assert_equal :immediate, o.pages.last.trigger
+    refute o.pages.last.graphic.exist?
+
+    Dir.mktmpdir do |tmpdir|
+      @map.add_object(1, o)
+      path = @map.save(tmpdir)
+      map = Map.load_xml(path)
+
+      o2 = map.get_object(o.name)
+
+      assert_equal 2, o2.pages.count
+      assert_equal 0, o2.pages.first.number
+      assert_equal Pathname.new("foo"), o2.pages.first.graphic
+      assert_equal :activate, o2.pages.first.trigger
+      assert_equal 42, eval(o2.pages.first.code)
+      assert_equal :immediate, o2.pages.last.trigger
+      refute o2.pages.last.graphic.exist?
+    end
+  end
+
+  def test_templated_objects
+    skip "Need to write a test for templated objects"
+    #@map.add_layer(:objectgroup, name: "Objects") # z = 1
+    #
+    #t = Template.new "chest" do
+    #  page do
+    #    parameter :item
+    #    parameter :count, :default => 1
+    #
+    #    code <<-CODE
+    #      "%{item}" * %{count}
+    #    CODE
+    #  end
+    #end
+    #
+    #o = MapObject.from_template(t)
+    #o.modify_params([{:item => "banana", :count => 3}])
+    #
+    #t.result(o.params) do |page, result|
+    #  assert_equal 0, page.number
+    #  assert_equal "bananabananabanana", eval(result)
+    #end
+  end
+
 end
+
+#t = Template.new("chest")
+#t.properties[:graphic] = "fdgd"
+#t.parameters = {:item => {:type => :string}, :count => {:type => :number, :default => 1}}
+#t.code = <<CODE
+#%{count}.times do
+#  $player.items << RPG::Item[%{item}]
+#end
+#CODE
