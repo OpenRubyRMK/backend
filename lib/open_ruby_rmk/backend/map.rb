@@ -51,10 +51,10 @@
 #
 # 1. The +name+ attribute is set to a map-unique ID that allows
 #    to directly retrieve the object from the map (via #get_object).
-# 2. The +custom_name+ *property* (see TiledTmx::PropertySet) can
+# 2. The +_name+ *property* (see TiledTmx::PropertySet) can
 #    be set to any name that is human-readable. #get_objects will
 #    return all objects on this map that have that name. By default,
-#    the +custom_name+ is generated from the ID.
+#    the +_name+ is generated from the ID.
 #
 # To easily obey these conventions, there’s the MapObject class,
 # which only is a shallow wrapper around TiledTmx::Object; everything
@@ -413,9 +413,9 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
   # Add a TMX ObjectGroup object to the map. This method adds the
   # required unique ID to the +object+, and generates a default
-  # +custom_name+ property from that ID. If you set the +name+
+  # +_name+ property from that ID. If you set the +name+
   # attribute on the object, no ID will be generated; if you
-  # set the +custom_name+ property, no name will be generated.
+  # set the +_name+ property, no name will be generated.
   # == Parameters
   # [layer_num]
   #   The Z index of the layer to add the object to.
@@ -434,7 +434,7 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
 
     changed
     object.name ||= generate_object_id.to_s
-    object.properties["custom_name"] ||= sprintf("Event-#{OpenRubyRMK::Backend::MapObject.format_object_id(object.name)}")
+    object.properties["_name"] ||= sprintf("Event-#{OpenRubyRMK::Backend::MapObject.format_object_id(object.name)}")
 
     if object.kind_of?(OpenRubyRMK::Backend::MapObject)
       layer.objects << object.tmx_object
@@ -464,21 +464,21 @@ class OpenRubyRMK::Backend::Map < TiledTmx::Map
     nil
   end
 
-  # Request all objects that have been assigned the given +custom_name+
+  # Request all objects that have been assigned the given +_name+
   # property.
   # == Parameters
-  # [custom_name]
-  #   The value of the +custom_name+ *property* (see TiledTmx::PropertySet)
+  # [_name]
+  #   The value of the +_name+ *property* (see TiledTmx::PropertySet)
   #   you’re looking for.
   # == Return value
-  # An array of all objects matching the given +custom_name+. If none
+  # An array of all objects matching the given +_name+. If none
   # matches, the array is empty.
-  def get_objects(custom_name)
+  def get_objects(_name)
     result = []
 
     each_layer(TiledTmx::ObjectGroup) do |layer|
       layer.objects.each do |object|
-        result << OpenRubyRMK::Backend::MapObject.from_tmx_object(object) if object.properties["custom_name"] == custom_name
+        result << OpenRubyRMK::Backend::MapObject.from_tmx_object(object) if object.properties["_name"] == _name
       end
     end
 
