@@ -285,6 +285,9 @@ class MapTest < Test::Unit::TestCase
       assert_equal :immediate, o2.pages.last.trigger
       refute o2.pages.last.graphic.exist?
     end
+
+    o.clear_pages
+    assert_equal 0, o.pages.count
   end
 
   def test_templated_objects

@@ -296,6 +296,15 @@ class OpenRubyRMK::Backend::MapObject
     pages.each_with_index{|page, i| @tmx_object.properties["page-#{i}"] = page}
   end
 
+  # Wipes all pages from this map object.
+  def clear_pages
+    # Note the use of keys.each instead of each_key, which wouldn’t allow
+    # us chaning the hash while iterating it.
+    @tmx_object.properties.keys.each do |key|
+      @tmx_object.properties.delete(key) if key =~ /^page-\d+$/
+    end
+  end
+
   # Returns the pages for this map object.
   # == Return value
   # For generic map objects, an array of Page instances. For
