@@ -42,8 +42,6 @@ class OpenRubyRMK::Backend::MapObject
   # Ruby Struct representing a single page for a generic map object.
   # Instances have the following attributes:
   #
-  # [number]
-  #   The 0-based page number.
   # [graphic]
   #   A Pathname instance relative to the project
   #   root’s <tt>data/resources/graphics</tt> directory.
@@ -65,7 +63,7 @@ class OpenRubyRMK::Backend::MapObject
   # [code]
   #   A string containing the executable Ruby code for
   #   this page.
-  class Page < Struct.new(:number, :graphic, :trigger, :code)
+  class Page < Struct.new(:graphic, :trigger, :code)
 
     def initialize(*)
       super
@@ -238,7 +236,8 @@ class OpenRubyRMK::Backend::MapObject
     @tmx_object.height = val
   end
 
-  # Add a new page to the map object.
+  # Add a new page to the map object. The page is appended
+  # to the end of the existing pages.
   # == Parameters
   # [page (nil)]
   #   The Page instance to add. If this is +nil+, a new
@@ -248,35 +247,53 @@ class OpenRubyRMK::Backend::MapObject
   # == Raises
   # [TypeError]
   #   This is not a generic map object.
-  # == Remarks
-  # The page number is set automatically to the next consecutive
-  # page number if +page+ is +nil+.
+  # == Return value
+  # The added page.
   def add_page(page = nil)
     generic!
 
-    page ||= Page.new(pages.count)
+    page ||= Page.new
     yield(page) if block_given?
 
     # Note we rely on two autoconversions of #to_json:
     #  1. Symbols are converted to strings.
     #  2. Pathnames are converted to strings.
-    @tmx_object.properties["page-#{page.number}"] = page.to_h.to_json # FIXME: This should be nested XML, but the TMX format doesn’t allow this
+    @tmx_object.properties["page-#{pages.count}"] = page.to_h.to_json # FIXME: This should be nested XML, but the TMX format doesn’t allow this
+
+    page
   end
 
   # Delete a page from the map object.
   # == Parameters
   # [n]
-  #   The number of the page you want to delete.
+  #   The number of the page you want to delete. Negative indices
+  #   count from the back.
   # == Raises
   # [TypeError]
   #   This is not a generic map object.
-  # == Remarks
-  # Other pages’ numbers won’t be affected by this, i.e. this
-  # method creates a gap.
   def delete_page(n)
     generic!
 
+    # Count from the end back if we get a negative index.
+    n = pages.count + n if n < 0
+
+    # Target acquired.
     @tmx_object.properties.delete("page-#{n}")
+
+    keys  = []
+    pages = []
+    @tmx_object.properties.each_pair do |key, val|
+      if key =~ /^page-\d+$/
+        keys << key
+        pages << val
+      end
+    end
+
+    # Delete all the pages (can’t do this on iterating the hash
+    # we are working on). Then re-add with the now correct indices
+    # so we don’t get a gap.
+    keys.each{|k| @tmx_object.properties.delete(k)}
+    pages.each_with_index{|page, i| @tmx_object.properties["page-#{i}"] = page}
   end
 
   # Returns the pages for this map object.
@@ -298,7 +315,6 @@ class OpenRubyRMK::Backend::MapObject
         if k =~ /^page-\d+$/
           hsh          = JSON.parse(v) # FIXME: This should be nested XML, but the TMX format doesn’t allow this
           page         = Page.new
-          page.number  = $1.to_i
           page.graphic = hsh["graphic"]
           page.trigger = hsh["trigger"]
           page.code    = hsh["code"]
@@ -308,7 +324,7 @@ class OpenRubyRMK::Backend::MapObject
         end
       end
 
-      result.sort_by(&:number).freeze # Can’t modify, see above
+      result.freeze # Can’t modify, see above
     else
       result = Marshal.load(Marshal.dump(@template.pages)) # Deep copy
       result.map(&:freeze)

@@ -259,9 +259,12 @@ class MapTest < Test::Unit::TestCase
     o.add_page do |page|
       page.trigger = :immediate
     end
+    o.add_page do |page|
+      page.trigger = :none
+    end
+    o.delete_page(-1)
 
     assert_equal 2, o.pages.count
-    assert_equal 0, o.pages.first.number
     assert_equal Pathname.new("foo"), o.pages.first.graphic
     assert_equal :activate, o.pages.first.trigger
     assert_equal 42, eval(o.pages.first.code)
@@ -276,7 +279,6 @@ class MapTest < Test::Unit::TestCase
       o2 = map.get_object(o.name)
 
       assert_equal 2, o2.pages.count
-      assert_equal 0, o2.pages.first.number
       assert_equal Pathname.new("foo"), o2.pages.first.graphic
       assert_equal :activate, o2.pages.first.trigger
       assert_equal 42, eval(o2.pages.first.code)
@@ -304,7 +306,6 @@ class MapTest < Test::Unit::TestCase
     #o.modify_params([{:item => "banana", :count => 3}])
     #
     #t.result(o.params) do |page, result|
-    #  assert_equal 0, page.number
     #  assert_equal "bananabananabanana", eval(result)
     #end
   end
